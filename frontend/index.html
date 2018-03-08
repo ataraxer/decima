@@ -1,0 +1,144 @@
+<!doctype html>
+<head>
+  <title>Inventory</title>
+
+  <!-- Meta information -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="main.css" />
+  <link rel="stylesheet" href="bower_components/pure/pure-min.css" />
+  <link rel="stylesheet" href="bower_components/pure/grids-responsive-min.css">
+  <link rel="stylesheet" href="bower_components/pure/tables-min.css">
+  <link rel="stylesheet" href="bower_components/pure/forms-min.css">
+
+  <script src="bower_components/handlebars/handlebars.min.js"></script>
+  <script src="bower_components/fetch/fetch.js"></script>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="content">
+      <h1>Tickets4Sale Inventory</h1>
+
+      <form id="date-form" class="pure-form">
+        <fieldset>
+          <legend>Show date:</legend>
+          <input type="date" name="show-date" placeholder="YYYY-MM-DD">
+          <button type="submit" class="pure-button pure-button-primary">Submit</button>
+        </fieldset>
+      </form>
+
+      <div id="inventory"></div>
+    </div>
+  </div>
+
+  <div style="width: 100%; padding-bottom: 2em"></div>
+
+  <script id="table-template" type="text/x-handlebars-template">
+    {{#each inventory}}
+      <h2 class="capitalized">{{genre}}</h2>
+
+      <table class="pure-table full-width">
+        <col>
+        <col width="10%">
+        <col width="10%">
+        <col width="20%">
+        <col width="10%">
+
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Tickets Left</th>
+            <th>Tickets Available</th>
+            <th>Status</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+
+        <tbody>
+        {{#each shows}}
+          <tr {{#odd @index}}class="pure-table-odd"{{/odd}}>
+            <td class="capitalized">{{title}}</td>
+            <td>{{[tickets left]}}</td>
+            <td>{{[tickets available]}}</td>
+            <td>{{status}}</td>
+            <td>{{price}}</td>
+          </tr>
+        {{/each}}
+        </tbody>
+      </table>
+    {{/each}}
+  </script>
+
+  <script id="error-template" type="text/x-handlebars-template">
+    <div class="error">
+      {{error}}
+    </div>
+  </script>
+
+  <script>
+  (function () {
+    Handlebars.registerHelper('odd', function(conditional, options) {
+      if ((conditional % 2) !== 0) return options.fn(this);
+    });
+
+    var loadTemplate = function (id) {
+      return Handlebars.compile(document.getElementById(id).innerHTML);
+    };
+
+    var tableTemplate = loadTemplate('table-template');
+    var errorTemplate = loadTemplate('error-template');
+
+    var reportError = function (error) {
+      var content = errorTemplate({ error: error });
+      document.getElementById('inventory').innerHTML = content;
+    };
+
+    var processForm = function (event) {
+      if (event.preventDefault) event.preventDefault();
+
+      var dateField = event.srcElement.querySelectorAll('[name=show-date]')[0];
+      var date = dateField.value;
+
+      fetch('api/inventory?show_date=' + date)
+        .then(function (response) {
+          var futureContent = null;
+
+          if (response.status == 200 || response.status == 400) {
+            futureContent = response.json();
+          } else {
+            futureContent = response.text();
+          }
+
+          return futureContent.then(function (content) {
+            return { success: response.status == 200, content: content };
+          });
+        })
+        .then(function (response) {
+          if (response.success) {
+            var content = tableTemplate(response.content);
+            document.getElementById('inventory').innerHTML = content;
+          } else {
+            reportError(response.content);
+          }
+        })
+        .catch(function (reason) {
+          console.error('request failed', reason);
+          reportError(reason);
+        });
+
+      // prevent default form handler from running
+      return false;
+    }
+
+    var form = document.getElementById('date-form');
+
+    if (form.attachEvent) {
+        form.attachEvent('submit', processForm);
+    } else {
+        form.addEventListener('submit', processForm);
+    }
+  })();
+  </script>
+</body>

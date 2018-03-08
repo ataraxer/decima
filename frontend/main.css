@@ -1,0 +1,36 @@
+body {
+  min-width: 320px;
+}
+
+.wrapper {
+  width: 100%;
+}
+
+.content {
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 0 1em;
+  min-width: 320px;
+  max-width: 70%;
+}
+
+h1, h2 {
+  font-weight: 300;
+}
+
+.full-width {
+  width:100%;
+}
+
+.capitalized {
+  text-transform: capitalize;
+}
+
+.error {
+  background-color: #ee6e73;
+  color: #fff;
+  font-weight: 500;
+  border-radius: 4px;
+  padding: 12px;
+}
+
