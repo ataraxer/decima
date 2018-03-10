@@ -1,5 +1,9 @@
+@import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
+
 body {
+  font-family: 'Source Sans Pro', sans-serif;
   min-width: 320px;
+  color: #34495e;
 }
 
 .wrapper {
@@ -32,5 +36,57 @@ h1, h2 {
   font-weight: 500;
   border-radius: 4px;
   padding: 12px;
+}
+
+.log {
+  line-height: 1.6em;
+}
+
+.log h3 {
+  margin: 0;
+}
+
+.log ul {
+  margin: 0;
+  padding: 0;
+}
+
+.tag {
+  border-radius: 3px;
+  background-color: #f8f8f8;
+  color: #e96900;
+  padding: 3px 5px;
+}
+
+hr {
+  border-width: 0;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+input[type="text"] {
+  width: 80%;
+}
+
+.fa-star {
+  color: #ffbf00; /* gold */
+  color: #e96900;
+}
+
+.fa-heart {
+  color: #E53935;
+}
+
+.rating {
+  white-space: nowrap;
+}
+
+* > .fa.fa-hover-show,
+
+*:hover > .fa.fa-hover-hidden {
+  display: none;
+}
+
+*:hover > .fa.fa-hover-show {
+  display: inline-block;
 }
 

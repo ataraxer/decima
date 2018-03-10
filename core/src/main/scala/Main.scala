@@ -47,7 +47,7 @@ object Main extends App with FailFastCirceSupport with Directives {
   }
 
   Http()
-    .bindAndHandle(route, interface = "127.0.0.1", port = 8080)
+    .bindAndHandle(route, interface = "0.0.0.0", port = 8080)
     .onComplete {
       case Success(binding) =>
         println(binding)

@@ -1,6 +1,6 @@
 <!doctype html>
 <head>
-  <title>Inventory</title>
+  <title>Decima</title>
 
   <!-- Meta information -->
   <meta charset="utf-8" />
@@ -15,59 +15,47 @@
 
   <script src="bower_components/handlebars/handlebars.min.js"></script>
   <script src="bower_components/fetch/fetch.js"></script>
+  <script src="bower_components/marked/lib/marked.js"></script>
+
+  <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
 </head>
 <body>
   <div class="wrapper">
     <div class="content">
-      <h1>Tickets4Sale Inventory</h1>
+      <h1>Decima</h1>
+
+      <div class="log">
+        <h3 class="capitalized">9th / Thursday</h3>
+        <ul class="fa-ul">
+          <li><span class="fa-li"><i class="fa fa-angle-right"></i></span><span class="tag">#movie</span>: Three Billboards outside Ebbing Missouri <span><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i></span></li>
+          <li style="opacity: 0.3"><span class="fa-li"><i class="fa fa-angle-right"></i></span>New Ninja Sex Party video: Orgy for One <span class="rating"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></span></li>
+          <li><span class="fa-li"><i class="fa fa-angle-right"></i></span>New <a href="#">Ninja Sex Party</a> video: Orgy for One <span class="rating"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></span></li>
+          <li><span class="fa-li"><i class="fas fa-check-circle"></i></span>Completed todo</li>
+          <li><span class="fa-li"><i class="far fa-circle"></i></span>Unfinished todo</li>
+        </ul>
+      </div>
+
+      <div class="log" id="log"></div>
+
+      <hr/>
 
       <form id="date-form" class="pure-form">
         <fieldset>
-          <legend>Show date:</legend>
-          <input type="date" name="show-date" placeholder="YYYY-MM-DD">
+          <input type="text" name="entry" placeholder="New entry...">
           <button type="submit" class="pure-button pure-button-primary">Submit</button>
         </fieldset>
       </form>
-
-      <div id="inventory"></div>
     </div>
   </div>
 
   <div style="width: 100%; padding-bottom: 2em"></div>
 
   <script id="table-template" type="text/x-handlebars-template">
-    {{#each inventory}}
-      <h2 class="capitalized">{{genre}}</h2>
-
-      <table class="pure-table full-width">
-        <col>
-        <col width="10%">
-        <col width="10%">
-        <col width="20%">
-        <col width="10%">
-
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Tickets Left</th>
-            <th>Tickets Available</th>
-            <th>Status</th>
-            <th>Price</th>
-          </tr>
-        </thead>
-
-        <tbody>
-        {{#each shows}}
-          <tr {{#odd @index}}class="pure-table-odd"{{/odd}}>
-            <td class="capitalized">{{title}}</td>
-            <td>{{[tickets left]}}</td>
-            <td>{{[tickets available]}}</td>
-            <td>{{status}}</td>
-            <td>{{price}}</td>
-          </tr>
-        {{/each}}
-        </tbody>
-      </table>
+    <h3 class="capitalized">9th / Thursday</h2>
+    {{#each this}}
+      <ul>
+        <li>{{md content.Text.content}}</li>
+      </ul>
     {{/each}}
   </script>
 
@@ -79,8 +67,8 @@
 
   <script>
   (function () {
-    Handlebars.registerHelper('odd', function(conditional, options) {
-      if ((conditional % 2) !== 0) return options.fn(this);
+    Handlebars.registerHelper('md', function(data) {
+      return new Handlebars.SafeString(marked.inlineLexer(data, [], {}));
     });
 
     var loadTemplate = function (id) {
@@ -92,16 +80,15 @@
 
     var reportError = function (error) {
       var content = errorTemplate({ error: error });
-      document.getElementById('inventory').innerHTML = content;
+      document.getElementById('log').innerHTML = content;
     };
 
     var processForm = function (event) {
       if (event.preventDefault) event.preventDefault();
 
-      var dateField = event.srcElement.querySelectorAll('[name=show-date]')[0];
-      var date = dateField.value;
+      var dateField = event.target.querySelectorAll('[name=entry]')[0];
 
-      fetch('api/inventory?show_date=' + date)
+      fetch('api/log')
         .then(function (response) {
           var futureContent = null;
 
@@ -118,7 +105,7 @@
         .then(function (response) {
           if (response.success) {
             var content = tableTemplate(response.content);
-            document.getElementById('inventory').innerHTML = content;
+            document.getElementById('log').innerHTML = content;
           } else {
             reportError(response.content);
           }
