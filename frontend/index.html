@@ -37,7 +37,7 @@
 
       <form id="filter-form" class="pure-form">
         <fieldset>
-          <input type="text" name="filter" placeholder="New entry...">
+          <input id="filter-input" type="text" name="filter" placeholder="New entry...">
           <button type="submit" class="pure-button pure-button-primary">Submit</button>
         </fieldset>
       </form>
@@ -147,9 +147,14 @@
       }
     }
 
-    var processFilter = processForm(function (target) {
+    var processFilterForm = processForm(function (target) {
       var filter = target.querySelectorAll('[name=filter]')[0];
       fetchLog(filter.value);
+    })
+
+    var processFilterInput = processForm(function (target) {
+      console.log(target.value);
+      fetchLog(target.value);
     })
 
     var processEntry = processForm(function (target) {
@@ -157,18 +162,19 @@
       saveEvent(content.value);
     })
 
-    var handleForm = function (id, handler) {
-      var form = document.getElementById(id);
+    var handleEvent = function (id, event, handler) {
+      var element = document.getElementById(id);
 
-      if (form.attachEvent) {
-        form.attachEvent('submit', handler);
+      if (element.attachEvent) {
+        element.attachEvent(event, handler);
       } else {
-        form.addEventListener('submit', handler);
+        element.addEventListener(event, handler);
       }
     }
 
-    handleForm('filter-form', processFilter);
-    handleForm('entry-form', processEntry);
+    handleEvent('filter-input', 'input', processFilterInput);
+    handleEvent('filter-form', 'submit', processFilterForm);
+    handleEvent('entry-form', 'submit', processEntry);
 
     fetchLog();
   })();

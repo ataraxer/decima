@@ -25,7 +25,6 @@ object Main extends App with FailFastCirceSupport with Directives {
     pathPrefix("api") {
       path("log") {
         parameter('filter) { filter =>
-          println(filter)
           complete(journal.log.filter( _.tags.contains(filter) ))
         } ~
         complete(journal.log)
