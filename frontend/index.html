@@ -35,11 +35,18 @@
         </ul>
       </div>
 
+      <form id="filter-form" class="pure-form">
+        <fieldset>
+          <input type="text" name="filter" placeholder="New entry...">
+          <button type="submit" class="pure-button pure-button-primary">Submit</button>
+        </fieldset>
+      </form>
+
       <div class="log" id="log"></div>
 
       <hr/>
 
-      <form id="date-form" class="pure-form">
+      <form id="entry-form" class="pure-form">
         <fieldset>
           <input type="text" name="entry" placeholder="New entry...">
           <button type="submit" class="pure-button pure-button-primary">Submit</button>
@@ -84,8 +91,8 @@
       document.getElementById('log').innerHTML = content;
     };
 
-    var fetchLog = function () {
-      fetch('api/log')
+    var fetchLog = function (filter) {
+      fetch(filter ? ('api/log?filter=' + filter) : 'api/log')
         .then(function (response) {
           var futureContent = null;
 
@@ -131,21 +138,37 @@
         });
     }
 
-    var processForm = function (event) {
-      if (event.preventDefault) event.preventDefault();
-      var content = event.target.querySelectorAll('[name=entry]')[0];
+    var processForm = function (cb) {
+      return function (event) {
+        if (event.preventDefault) event.preventDefault();
+        cb(event.target);
+        // prevent default form handler from running
+        return false;
+      }
+    }
+
+    var processFilter = processForm(function (target) {
+      var filter = target.querySelectorAll('[name=filter]')[0];
+      fetchLog(filter.value);
+    })
+
+    var processEntry = processForm(function (target) {
+      var content = target.querySelectorAll('[name=entry]')[0];
       saveEvent(content.value);
-      // prevent default form handler from running
-      return false;
+    })
+
+    var handleForm = function (id, handler) {
+      var form = document.getElementById(id);
+
+      if (form.attachEvent) {
+        form.attachEvent('submit', handler);
+      } else {
+        form.addEventListener('submit', handler);
+      }
     }
 
-    var form = document.getElementById('date-form');
-
-    if (form.attachEvent) {
-      form.attachEvent('submit', processForm);
-    } else {
-      form.addEventListener('submit', processForm);
-    }
+    handleForm('filter-form', processFilter);
+    handleForm('entry-form', processEntry);
 
     fetchLog();
   })();
