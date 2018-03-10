@@ -51,7 +51,7 @@ h1, h2 {
   padding: 0;
 }
 
-.tag {
+code {
   border-radius: 3px;
   background-color: #f8f8f8;
   color: #e96900;
@@ -88,5 +88,21 @@ input[type="text"] {
 
 *:hover > .fa.fa-hover-show {
   display: inline-block;
+}
+
+.badge[data-badge]:after {
+  content: attr(data-badge);
+  position: absolute;
+  top: -10px;
+  right: 20px;
+  font-size: .7em;
+  font-weight: bold;
+  background: #E53935;
+  color: white;
+  min-width: 18px;
+  height: 18px;
+  text-align: center;
+  line-height: 18px;
+  border-radius: 50%;
 }
 

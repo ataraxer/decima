@@ -19,19 +19,18 @@ object Main extends App with FailFastCirceSupport with Directives {
   import system.dispatcher
 
   val storage = new FileStorage("test.json")
-  var log = storage.load()
+  val journal = new Journal(storage)
 
   val route = {
     pathPrefix("api") {
       path("log") {
-        complete(log)
+        complete(journal.log)
       } ~
       path("save") {
         post {
-          entity(as[Event]) { event =>
+          entity(as[String]) { content =>
             complete {
-              storage.save(event)
-              log +:= event
+              journal.save(content)
             }
           }
         }

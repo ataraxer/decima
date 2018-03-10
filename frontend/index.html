@@ -27,8 +27,8 @@
       <div class="log">
         <h3 class="capitalized">9th / Thursday</h3>
         <ul class="fa-ul">
-          <li><span class="fa-li"><i class="fa fa-angle-right"></i></span><span class="tag">#movie</span>: Three Billboards outside Ebbing Missouri <span><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i></span></li>
-          <li style="opacity: 0.3"><span class="fa-li"><i class="fa fa-angle-right"></i></span>New Ninja Sex Party video: Orgy for One <span class="rating"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></span></li>
+          <li><span class="fa-li badge" data-badge="3"><i class="fa fa-angle-right"></i></span><code>#movie</code>: Three Billboards outside Ebbing Missouri <span><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i></span></li>
+          <li style="opacity: 0.3"><span class="fa-li badge" data-badge="9"><i class="fa fa-angle-right"></i></span>New Ninja Sex Party video: Orgy for One <span class="rating"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></span></li>
           <li><span class="fa-li"><i class="fa fa-angle-right"></i></span>New <a href="#">Ninja Sex Party</a> video: Orgy for One <span class="rating"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></span></li>
           <li><span class="fa-li"><i class="fas fa-check-circle"></i></span>Completed todo</li>
           <li><span class="fa-li"><i class="far fa-circle"></i></span>Unfinished todo</li>
@@ -50,13 +50,14 @@
 
   <div style="width: 100%; padding-bottom: 2em"></div>
 
-  <script id="table-template" type="text/x-handlebars-template">
+  <script id="log-template" type="text/x-handlebars-template">
+    <hr/>
     <h3 class="capitalized">9th / Thursday</h2>
+    <ul class="fa-ul">
     {{#each this}}
-      <ul>
-        <li>{{md content.Text.content}}</li>
-      </ul>
+      <li><span class="fa-li"><i class="fa fa-angle-right"></i></span>{{md content.Text.content}}</li>
     {{/each}}
+    </ul>
   </script>
 
   <script id="error-template" type="text/x-handlebars-template">
@@ -75,7 +76,7 @@
       return Handlebars.compile(document.getElementById(id).innerHTML);
     };
 
-    var tableTemplate = loadTemplate('table-template');
+    var logTemplate = loadTemplate('log-template');
     var errorTemplate = loadTemplate('error-template');
 
     var reportError = function (error) {
@@ -83,11 +84,7 @@
       document.getElementById('log').innerHTML = content;
     };
 
-    var processForm = function (event) {
-      if (event.preventDefault) event.preventDefault();
-
-      var dateField = event.target.querySelectorAll('[name=entry]')[0];
-
+    var fetchLog = function () {
       fetch('api/log')
         .then(function (response) {
           var futureContent = null;
@@ -104,7 +101,7 @@
         })
         .then(function (response) {
           if (response.success) {
-            var content = tableTemplate(response.content);
+            var content = logTemplate(response.content);
             document.getElementById('log').innerHTML = content;
           } else {
             reportError(response.content);
@@ -114,7 +111,30 @@
           console.error('request failed', reason);
           reportError(reason);
         });
+    }
 
+    var saveEvent = function (content) {
+      var request = {
+        method: 'POST',
+        body: JSON.stringify(content),
+        headers: { 'content-type': 'application/json' }
+      }
+
+      fetch('api/save', request)
+        .catch(function (reason) {
+          console.error('request failed', reason);
+          reportError(reason);
+        })
+        .then(function (result) {
+          console.log(result);
+          return fetchLog();
+        });
+    }
+
+    var processForm = function (event) {
+      if (event.preventDefault) event.preventDefault();
+      var content = event.target.querySelectorAll('[name=entry]')[0];
+      saveEvent(content.value);
       // prevent default form handler from running
       return false;
     }
@@ -122,10 +142,12 @@
     var form = document.getElementById('date-form');
 
     if (form.attachEvent) {
-        form.attachEvent('submit', processForm);
+      form.attachEvent('submit', processForm);
     } else {
-        form.addEventListener('submit', processForm);
+      form.addEventListener('submit', processForm);
     }
+
+    fetchLog();
   })();
   </script>
 </body>
