@@ -172,7 +172,26 @@
       }
     }
 
-    handleEvent('filter-input', 'input', processFilterInput);
+    var debounce = function (func, wait, immediate) {
+      var timeout;
+
+      return function executedFunction() {
+        var context = this;
+        var args = arguments;
+
+        var later = function() {
+          timeout = null;
+          if (!immediate) func.apply(context, args);
+        };
+
+        var callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) func.apply(context, args);
+      };
+    };
+
+    handleEvent('filter-input', 'input', debounce(processFilterInput, 250));
     handleEvent('filter-form', 'submit', processFilterForm);
     handleEvent('entry-form', 'submit', processEntry);
 
