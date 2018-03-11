@@ -54,7 +54,8 @@ h1, h2 {
 code {
   border-radius: 3px;
   background-color: #f8f8f8;
-  color: #e96900;
+  /*color: #e96900;*/
+  color: #22a0db;
   padding: 3px 5px;
 }
 

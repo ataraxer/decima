@@ -24,23 +24,16 @@
     <div class="content">
       <h1>Decima</h1>
 
-      <div class="log">
-        <h3 class="capitalized">9th / Thursday</h3>
-        <ul class="fa-ul">
-          <li><span class="fa-li badge" data-badge="3"><i class="fa fa-angle-right"></i></span><code>#movie</code>: Three Billboards outside Ebbing Missouri <span><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i></span></li>
-          <li style="opacity: 0.3"><span class="fa-li badge" data-badge="9"><i class="fa fa-angle-right"></i></span>New Ninja Sex Party video: Orgy for One <span class="rating"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></span></li>
-          <li><span class="fa-li"><i class="fa fa-angle-right"></i></span>New <a href="#">Ninja Sex Party</a> video: Orgy for One <span class="rating"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></span></li>
-          <li><span class="fa-li"><i class="fas fa-check-circle"></i></span>Completed todo</li>
-          <li><span class="fa-li"><i class="far fa-circle"></i></span>Unfinished todo</li>
-        </ul>
-      </div>
-
       <form id="filter-form" class="pure-form">
         <fieldset>
           <input id="filter-input" type="text" name="filter" placeholder="New entry...">
           <button type="submit" class="pure-button pure-button-primary">Submit</button>
         </fieldset>
       </form>
+
+      <div id="tags"></div>
+
+      <hr/>
 
       <div class="log" id="log"></div>
 
@@ -58,13 +51,18 @@
   <div style="width: 100%; padding-bottom: 2em"></div>
 
   <script id="log-template" type="text/x-handlebars-template">
-    <hr/>
-    <h3 class="capitalized">9th / Thursday</h2>
+    <!--<h3 class="capitalized">9th / Thursday</h2>-->
     <ul class="fa-ul">
     {{#each this}}
       <li><span class="fa-li"><i class="fa fa-angle-right"></i></span>{{md content.Text.content}}</li>
     {{/each}}
     </ul>
+  </script>
+
+  <script id="tags-template" type="text/x-handlebars-template">
+    {{#each this}}
+      <code class="tag">{{this}}</code>
+    {{/each}}
   </script>
 
   <script id="error-template" type="text/x-handlebars-template">
@@ -83,6 +81,7 @@
       return Handlebars.compile(document.getElementById(id).innerHTML);
     };
 
+    var tagsTemplate = loadTemplate('tags-template');
     var logTemplate = loadTemplate('log-template');
     var errorTemplate = loadTemplate('error-template');
 
@@ -90,6 +89,36 @@
       var content = errorTemplate({ error: error });
       document.getElementById('log').innerHTML = content;
     };
+
+    var fetchTags = function () {
+      fetch('api/tags')
+        .then(function (response) {
+          var futureContent = null;
+
+          if (response.status == 200 || response.status == 400) {
+            futureContent = response.json();
+          } else {
+            futureContent = response.text();
+          }
+
+          return futureContent.then(function (content) {
+            return { success: response.status == 200, content: content };
+          });
+        })
+        .then(function (response) {
+          if (response.success) {
+            var content = tagsTemplate(response.content);
+            document.getElementById('tags').innerHTML = content;
+          } else {
+            reportError(response.content);
+          }
+        })
+        .catch(function (reason) {
+          console.error('request failed', reason);
+          reportError(reason);
+        });
+    }
+
 
     var fetchLog = function (filter) {
       fetch(filter ? ('api/log?filter=' + filter) : 'api/log')
@@ -133,7 +162,9 @@
           reportError(reason);
         })
         .then(function (result) {
-          console.log(result);
+          return fetchTags();
+        })
+        .then(function (result) {
           return fetchLog();
         });
     }
@@ -153,13 +184,13 @@
     })
 
     var processFilterInput = processForm(function (target) {
-      console.log(target.value);
       fetchLog(target.value);
     })
 
     var processEntry = processForm(function (target) {
       var content = target.querySelectorAll('[name=entry]')[0];
       saveEvent(content.value);
+      content.value = "";
     })
 
     var handleEvent = function (id, event, handler) {
@@ -195,6 +226,7 @@
     handleEvent('filter-form', 'submit', processFilterForm);
     handleEvent('entry-form', 'submit', processEntry);
 
+    fetchTags();
     fetchLog();
   })();
   </script>

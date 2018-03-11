@@ -18,7 +18,7 @@ object Main extends App with FailFastCirceSupport with Directives {
   implicit val materializer = ActorMaterializer()
   import system.dispatcher
 
-  val storage = new FileStorage("test.json")
+  val storage = new FileStorage("first.json")
   val journal = new Journal(storage)
 
   val route = {
