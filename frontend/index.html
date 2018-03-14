@@ -1,4 +1,4 @@
-<!doctype html>
+
 <head>
   <title>Decima</title>
 
@@ -20,35 +20,34 @@
   <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
 </head>
 <body>
-  <div class="wrapper">
+  <header class="wrapper">
     <div class="content">
-      <h1>Decima</h1>
-
-      <form id="filter-form" class="pure-form">
+      <form class="pure-form">
         <fieldset>
-          <input id="filter-input" type="text" name="filter" placeholder="New entry...">
-          <button type="submit" class="pure-button pure-button-primary">Submit</button>
-        </fieldset>
-      </form>
-
-      <div id="tags"></div>
-
-      <hr/>
-
-      <div class="log" id="log"></div>
-
-      <hr/>
-
-      <form id="entry-form" class="pure-form">
-        <fieldset>
-          <input type="text" name="entry" placeholder="New entry...">
-          <button type="submit" class="pure-button pure-button-primary">Submit</button>
+          <input id="filter-input" type="text" name="filter" placeholder="Filter by tag..." autocapitalize="off">
         </fieldset>
       </form>
     </div>
-  </div>
+  </header>
 
-  <div style="width: 100%; padding-bottom: 2em"></div>
+  <div class="main">
+    <div class="wrapper">
+      <div class="content">
+        <div id="tags" class="tags"></div>
+        <hr/>
+        <div class="log" id="log"></div>
+        <hr/>
+
+        <form id="entry-form" class="pure-form">
+          <fieldset>
+            <input type="text" name="entry" placeholder="New entry..." autocapitalize="off">
+          </fieldset>
+        </form>
+      </div>
+    </div>
+
+    <div style="width: 100%; padding-bottom: 2em"></div>
+  </div>
 
   <script id="log-template" type="text/x-handlebars-template">
     <!--<h3 class="capitalized">9th / Thursday</h2>-->
@@ -223,7 +222,6 @@
     };
 
     handleEvent('filter-input', 'input', debounce(processFilterInput, 250));
-    handleEvent('filter-form', 'submit', processFilterForm);
     handleEvent('entry-form', 'submit', processEntry);
 
     fetchTags();
