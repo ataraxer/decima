@@ -7,9 +7,14 @@ import cats.syntax.flatMap._
 
 object Journal {
   val TagRegex = """#[\w\d-_]+""".r
+  val WrappedTagRegex = """`#[\w\d-_]+`""".r
 
   def extractTags(input: String): Set[String] = {
     TagRegex.findAllIn(input).map( _ stripPrefix "#" ).toSet
+  }
+
+  def stripTags(input: String): String = {
+    WrappedTagRegex.replaceAllIn(input, "").trim
   }
 }
 
@@ -27,7 +32,7 @@ final class Journal[F[_]: Applicative : FlatMap](storage: Storage[F]) {
     val event = Event(
       creationTime = System.currentTimeMillis,
       tags = extractTags(content),
-      content = Text(TagRegex.replaceAllIn(content, m => f"`$m`"))
+      content = Text(TagRegex.replaceAllIn(content.trim, m => f"`$m`"))
     )
 
     println(event)

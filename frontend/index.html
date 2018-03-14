@@ -36,17 +36,18 @@
         <div id="tags" class="tags"></div>
         <hr/>
         <div class="log" id="log"></div>
-        <hr/>
+      </div>
+    </div>
 
+    <footer class="wrapper">
+      <div class="wide-content" style="padding: 0.5em 1em">
         <form id="entry-form" class="pure-form">
           <fieldset>
             <input type="text" name="entry" placeholder="New entry..." autocapitalize="off">
           </fieldset>
         </form>
       </div>
-    </div>
-
-    <div style="width: 100%; padding-bottom: 2em"></div>
+    </footer>
   </div>
 
   <script id="log-template" type="text/x-handlebars-template">
@@ -190,6 +191,7 @@
       var content = target.querySelectorAll('[name=entry]')[0];
       saveEvent(content.value);
       content.value = "";
+      //window.scrollTo(0,document.body.scrollHeight);
     })
 
     var handleEvent = function (id, event, handler) {

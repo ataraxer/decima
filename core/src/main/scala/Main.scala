@@ -23,9 +23,16 @@ object Main extends App with FailFastCirceSupport with Directives {
 
   val route = {
     pathPrefix("api") {
+      path("tags") {
+        complete(journal.log.flatMap( _.tags ).distinct.sorted)
+      } ~
       path("log") {
         parameter('filter) { filter =>
-          complete(journal.log.filter( _.tags.contains(filter) ))
+          complete {
+            journal.log
+              .filter( _.tags.contains(filter) )
+              .sortBy( event => Journal.stripTags(event.text) )
+          }
         } ~
         complete(journal.log)
       } ~
