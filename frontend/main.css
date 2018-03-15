@@ -92,9 +92,9 @@ code {
   border-radius: 3px;
   /*color: #e96900;*/ /* orange */
   /*background-color: #f8f8f8;*/
-  /*color: #22a0db;*/ /* blue */
+  /*color: #46b980;*/ /* blue */
   color: #f8f8f8;
-  background-color: #22a0db;
+  background-color: #46b980;
   /*background-color: #71c6a5;*/ /* green */
   /*padding: 3px 5px;*/
   padding: 1px 5px;
@@ -151,8 +151,9 @@ input[type="text"] {
 }
 
 header {
-  /*background-color: #22a0db;*/
-  background-color: rgba(34, 160, 219, 0.9);
+  /*background-color: #46b980;*/
+  /*background-color: rgba(34, 160, 219, 0.9);*/
+  background-color: rgba(70, 185, 128, 0.9);
   z-index: 1;
   padding: 0.5em 0em;
   position: fixed;
@@ -168,6 +169,10 @@ input {
   margin: 0 !important;
 }
 
+input:focus {
+  border-color: #46b980 !important;
+}
+
 .main {
   margin-top: 58px;
   margin-bottom: 55px;
@@ -181,10 +186,10 @@ footer {
 }
 
 a {
-  color: #22a0db;
+  color: #46b980;
   font-weight: 600;
   text-decoration: none;
-  background-image: linear-gradient(#22a0db, #22a0db);
+  background-image: linear-gradient(#46b980, #46b980);
   background-size: 100% 1px;
   background-position: center bottom 10%;
   background-origin: padding-box;
@@ -197,4 +202,5 @@ a:hover {
 
 .fa-li {
   top: 0.3em;
+  width: 1.8em;
 }
