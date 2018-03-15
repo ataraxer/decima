@@ -35,8 +35,6 @@ final class Journal[F[_]: Applicative : FlatMap](storage: Storage[F]) {
       content = Text(TagRegex.replaceAllIn(content.trim, m => f"`$m`"))
     )
 
-    println(event)
-
     storage.save(event) >> (_log :+= event).pure[F]
   }
 }
