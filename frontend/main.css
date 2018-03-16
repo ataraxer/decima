@@ -204,3 +204,13 @@ a:hover {
   top: 0.3em;
   width: 1.8em;
 }
+
+.clear-input {
+  display: none;
+  cursor: pointer;
+  position: fixed;
+  margin-left: -1.6em;
+  margin-top: 0.7em;
+  color: #aaa;
+}
+

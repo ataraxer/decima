@@ -24,7 +24,10 @@
     <div class="content">
       <form class="pure-form">
         <fieldset>
-          <input id="filter-input" type="text" name="filter" placeholder="Filter by tag..." autocapitalize="off">
+          <input id="filter-input" type="text" name="filter" placeholder="Filter by tag..." autocapitalize="off" style="float: left">
+          <span id="clear-filter-input" class="clear-input">
+            <i class="fa fa-times-circle"></i>
+          </span>
         </fieldset>
       </form>
     </div>
@@ -102,10 +105,27 @@
       document.getElementById('log').innerHTML = content;
     };
 
+    var clearFilterInput = document.getElementById('clear-filter-input');
+
+    var showClearFilterInput = function () {
+      clearFilterInput.style.display = 'inline';
+    };
+
+    var hideClearFilterInput = function () {
+      clearFilterInput.style.display = 'none';
+    };
+
+    clearFilterInput.addEventListener('click', function (event) {
+      document.getElementById('filter-input').value = '';
+      hideClearFilterInput();
+      fetchSortedLog();
+    });
+
     var handleTagClick = function (event) {
       if (event.target.tagName == 'CODE') {
         var filter = event.target.innerHTML.replace('#', '');
         document.getElementById('filter-input').value = filter;
+        showClearFilterInput();
         fetchLog(filter);
       }
     }
@@ -233,8 +253,10 @@
 
     var processFilterInput = processForm(function (target) {
       if (target.value) {
+        showClearFilterInput();
         fetchLog(target.value);
       } else {
+        hideClearFilterInput();
         fetchSortedLog();
       }
     })
