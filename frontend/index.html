@@ -72,7 +72,7 @@
 
   <script id="tags-template" type="text/x-handlebars-template">
     {{#each this}}
-      <code class="tag">{{this}}</code>
+      <code>{{this}}</code>
     {{/each}}
   </script>
 
@@ -101,6 +101,16 @@
       var content = errorTemplate({ error: error });
       document.getElementById('log').innerHTML = content;
     };
+
+    var handleTagClick = function (event) {
+      if (event.target.tagName == 'CODE') {
+        var filter = event.target.innerHTML.replace('#', '');
+        document.getElementById('filter-input').value = filter;
+        fetchLog(filter);
+      }
+    }
+
+    document.addEventListener('click', handleTagClick);
 
     var fetchTags = function () {
       fetch('api/tags')
@@ -238,10 +248,10 @@
     var handleEvent = function (id, event, handler) {
       var element = document.getElementById(id);
 
-      if (element.attachEvent) {
-        element.attachEvent(event, handler);
-      } else {
+      if (element.addEventListener) {
         element.addEventListener(event, handler);
+      } else {
+        element.attachEvent(event, handler);
       }
     }
 
