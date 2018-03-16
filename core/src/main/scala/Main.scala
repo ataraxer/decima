@@ -6,7 +6,11 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.model.StatusCodes
 
+import io.circe.Json
+import io.circe.syntax._
 import io.circe.generic.auto._
+
+import org.joda.time.LocalDateTime
 
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 
@@ -35,6 +39,22 @@ object Main extends App with FailFastCirceSupport with Directives {
           }
         } ~
         complete(journal.log)
+      } ~
+      path("log-by-date") {
+        complete {
+          journal.log
+            .groupBy { event =>
+              new LocalDateTime(event.creationTime).toLocalDate
+            }
+            .toSeq
+            .sortBy( _._1.toString )
+            .map { case (key, events) =>
+              Json.obj(
+                "date" -> key.toString.asJson,
+                "events" -> events.asJson
+              )
+            }
+      }
       } ~
       path("save") {
         post {

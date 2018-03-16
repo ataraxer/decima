@@ -59,6 +59,17 @@
     </ul>
   </script>
 
+  <script id="sorted-log-template" type="text/x-handlebars-template">
+    {{#each this}}
+      <h3 class="capitalized">{{date}}</h2>
+      <ul class="fa-ul">
+      {{#each events}}
+        <li><span class="fa-li" data-badge="3"><i class="fa fa-angle-right"></i></span>{{md content.Text.content}}</li>
+      {{/each}}
+      </ul>
+    {{/each}}
+  </script>
+
   <script id="tags-template" type="text/x-handlebars-template">
     {{#each this}}
       <code class="tag">{{this}}</code>
@@ -83,6 +94,7 @@
 
     var tagsTemplate = loadTemplate('tags-template');
     var logTemplate = loadTemplate('log-template');
+    var sortedLogTemplate = loadTemplate('sorted-log-template');
     var errorTemplate = loadTemplate('error-template');
 
     var reportError = function (error) {
@@ -119,9 +131,8 @@
         });
     }
 
-
     var fetchLog = function (filter) {
-      return fetch(filter ? ('api/log?filter=' + filter) : 'api/log')
+      return fetch('api/log?filter=' + filter)
         .then(function (response) {
           var futureContent = null;
 
@@ -149,6 +160,35 @@
         });
     }
 
+    var fetchSortedLog = function () {
+      return fetch('api/log-by-date')
+        .then(function (response) {
+          var futureContent = null;
+
+          if (response.status == 200 || response.status == 400) {
+            futureContent = response.json();
+          } else {
+            futureContent = response.text();
+          }
+
+          return futureContent.then(function (content) {
+            return { success: response.status == 200, content: content };
+          });
+        })
+        .then(function (response) {
+          if (response.success) {
+            var content = sortedLogTemplate(response.content);
+            document.getElementById('log').innerHTML = content;
+          } else {
+            reportError(response.content);
+          }
+        })
+        .catch(function (reason) {
+          console.error('request failed', reason);
+          reportError(reason);
+        });
+    }
+
     var saveEvent = function (content) {
       var request = {
         method: 'POST',
@@ -165,7 +205,7 @@
           return fetchTags();
         })
         .then(function (result) {
-          return fetchLog();
+          return fetchSortedLog();
         })
         .then(function (result) {
           window.scrollTo(0, document.body.scrollHeight);
@@ -181,13 +221,12 @@
       }
     }
 
-    var processFilterForm = processForm(function (target) {
-      var filter = target.querySelectorAll('[name=filter]')[0];
-      fetchLog(filter.value);
-    })
-
     var processFilterInput = processForm(function (target) {
-      fetchLog(target.value);
+      if (target.value) {
+        fetchLog(target.value);
+      } else {
+        fetchSortedLog();
+      }
     })
 
     var processEntry = processForm(function (target) {
@@ -229,7 +268,7 @@
     handleEvent('entry-form', 'submit', processEntry);
 
     fetchTags();
-    fetchLog();
+    fetchSortedLog();
   })();
   </script>
 </body>
