@@ -26,7 +26,7 @@
     <div class="content">
       <form class="pure-form">
         <fieldset>
-          <input id="filter-input" type="text" name="filter" placeholder="Filter by tag..." autocapitalize="off" class="float-left">
+          <input id="filter-input" type="text" name="filter" placeholder="Filter by tag..." autocapitalize="off" class="float-left input-button-padding">
           <span id="clear-filter-input" class="input-button hidden">
             <i class="fa fa-times-circle"></i>
           </span>
@@ -46,9 +46,9 @@
 
     <footer class="wrapper">
       <div class="wide-content">
-        <form id="entry-form" class="pure-form">
+        <form id="entry-form" class="pure-form" action="#">
           <fieldset>
-            <input id='entry-input' type="text" name="entry" placeholder="New entry..." autocapitalize="off" class="float-left">
+            <input id="entry-input" type="text" placeholder="New entry..." autocapitalize="off" class="float-left input-button-padding">
             <span id="insert-hashtag" class="input-button">
               <i class="fa fa-hashtag"></i>
             </span>
@@ -274,6 +274,14 @@
       }
     })
 
+    var toggleFilterClearButton = processForm(function (target) {
+      if (target.value) {
+        showClearFilterInput();
+      } else {
+        hideClearFilterInput();
+      }
+    })
+
     var processEntry = processForm(function (target) {
       var content = target.querySelectorAll('[name=entry]')[0];
       var payload = content.value;
@@ -313,6 +321,7 @@
       };
     };
 
+    handleEvent('filter-input', 'input', toggleFilterClearButton);
     handleEvent('filter-input', 'input', debounce(processFilterInput, 250));
     handleEvent('entry-form', 'submit', processEntry);
 

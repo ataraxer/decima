@@ -115,6 +115,12 @@ input[type="text"] {
   -webkit-appearance: none;
 }
 
+input[type="search"] {
+  width: 100%;
+  box-shadow: none !important;
+  -webkit-appearance: none;
+}
+
 .fa-star {
   color: #ffbf00; /* gold */
   color: #e96900;
@@ -189,6 +195,16 @@ footer {
   bottom: 0;
 }
 
+@media only screen and (max-width: 768px) {
+  footer {
+    position: relative !important;
+  }
+
+  .main {
+    margin-bottom: 0;
+  }
+}
+
 a {
   color: #46b980;
   font-weight: 600;
@@ -217,12 +233,18 @@ a:hover {
   float: left;
 }
 
+.input-button-padding {
+  padding-right: 2em !important;
+}
+
 .input-button {
-  display: inline;
+  z-index: 999;
   cursor: pointer;
-  position: fixed;
-  margin-left: -1.6em;
-  margin-top: 0.7em;
+  display: block;
+  float: right;
+  position: relative;
+  margin-left: -2.6em;
+  padding: 0.66em;
   color: #aaa;
 }
 
