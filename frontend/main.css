@@ -254,16 +254,34 @@ a:hover {
   float: left;
 }
 
+.rich-input {
+  position: relative;
+}
+
 .input-button-padding {
-  padding-right: 2em !important;
+  padding-right: 2.1em !important;
 }
 
 .input-button {
+  top: 0;
   cursor: pointer;
   display: block;
-  float: right;
-  position: relative;
-  margin-left: -2.6em;
+  position: absolute;
+  right: 0;
+  padding: 0.66em;
+  color: #aaa;
+}
+
+.input-button-padding-left {
+  padding-left: 2.1em !important;
+}
+
+.input-button-left {
+  top: 0;
+  cursor: pointer;
+  display: block;
+  position: absolute;
+  left: 0;
   padding: 0.66em;
   color: #aaa;
 }
