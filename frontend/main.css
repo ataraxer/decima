@@ -221,6 +221,8 @@ footer {
 
   .add-entry {
     display: block;
+    animation-duration: 0.5s;
+    -webkit-animation-duration: 0.5s;
   }
 }
 

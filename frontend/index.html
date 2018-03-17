@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="bower_components/pure/grids-responsive-min.css">
   <link rel="stylesheet" href="bower_components/pure/tables-min.css">
   <link rel="stylesheet" href="bower_components/pure/forms-min.css">
+  <link rel="stylesheet" href="bower_components/animate.css/animate.min.css">
 
   <script src="bower_components/handlebars/handlebars.min.js"></script>
   <script src="bower_components/fetch/fetch.js"></script>
@@ -22,7 +23,7 @@
   <base target="_blank">
 </head>
 <body>
-  <div id="add-entry" class="add-entry">
+  <div id="add-entry" class="add-entry fadeIn">
     <!--<i class="fas fa-chevron-circle-down"></i>-->
     <span style="border-radius: 50%; background-color: white">
       <i class="fas fa-plus-circle"></i>
@@ -117,9 +118,18 @@
       document.getElementById('log').innerHTML = content;
     };
 
+    var addEntryButton = document.getElementById('add-entry');
     var entryInput = document.getElementById('entry-input');
     var filterInput = document.getElementById('filter-input');
     var clearFilterInput = document.getElementById('clear-filter-input');
+
+    window.onscroll = function (event) {
+      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+        addEntryButton.classList.add('hidden');
+      } else {
+        addEntryButton.classList.remove('hidden');
+      }
+    };
 
     var showClearFilterInput = function () {
       clearFilterInput.classList.remove('hidden');
@@ -149,11 +159,9 @@
       window.scrollTo(0, document.body.scrollHeight);
     };
 
-    document
-      .getElementById('add-entry')
-      .addEventListener('click', function (event) {
-        entryInput.focus();
-      });
+    addEntryButton.addEventListener('click', function (event) {
+      entryInput.focus();
+    });
 
     var handleClick = function (event) {
       if (event.target.tagName == 'CODE') {
