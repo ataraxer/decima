@@ -209,8 +209,16 @@ a:hover {
   width: 1.8em;
 }
 
-.clear-input {
+.hidden {
   display: none;
+}
+
+.float-left {
+  float: left;
+}
+
+.input-button {
+  display: inline;
   cursor: pointer;
   position: fixed;
   margin-left: -1.6em;

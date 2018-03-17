@@ -18,14 +18,16 @@
   <script src="bower_components/marked/lib/marked.js"></script>
 
   <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
+
+  <base target="_blank">
 </head>
 <body>
   <header class="wrapper">
     <div class="content">
       <form class="pure-form">
         <fieldset>
-          <input id="filter-input" type="text" name="filter" placeholder="Filter by tag..." autocapitalize="off" style="float: left">
-          <span id="clear-filter-input" class="clear-input">
+          <input id="filter-input" type="text" name="filter" placeholder="Filter by tag..." autocapitalize="off" class="float-left">
+          <span id="clear-filter-input" class="input-button hidden">
             <i class="fa fa-times-circle"></i>
           </span>
         </fieldset>
@@ -46,7 +48,10 @@
       <div class="wide-content">
         <form id="entry-form" class="pure-form">
           <fieldset>
-            <input type="text" name="entry" placeholder="New entry..." autocapitalize="off">
+            <input id='entry-input' type="text" name="entry" placeholder="New entry..." autocapitalize="off" class="float-left">
+            <span id="insert-hashtag" class="input-button">
+              <i class="fa fa-hashtag"></i>
+            </span>
           </fieldset>
         </form>
       </div>
@@ -108,11 +113,11 @@
     var clearFilterInput = document.getElementById('clear-filter-input');
 
     var showClearFilterInput = function () {
-      clearFilterInput.style.display = 'inline';
+      clearFilterInput.classList.remove('hidden');
     };
 
     var hideClearFilterInput = function () {
-      clearFilterInput.style.display = 'none';
+      clearFilterInput.classList.add('hidden');
     };
 
     clearFilterInput.addEventListener('click', function (event) {
@@ -120,6 +125,14 @@
       hideClearFilterInput();
       fetchSortedLog();
     });
+
+    document
+      .getElementById('insert-hashtag')
+      .addEventListener('click', function (event) {
+        var input = document.getElementById('entry-input')
+        input.value += '#';
+        input.focus();
+      });
 
     var handleTagClick = function (event) {
       if (event.target.tagName == 'CODE') {
@@ -263,8 +276,12 @@
 
     var processEntry = processForm(function (target) {
       var content = target.querySelectorAll('[name=entry]')[0];
-      saveEvent(content.value);
-      content.value = "";
+      var payload = content.value;
+
+      if (payload) {
+        saveEvent(payload);
+        content.value = "";
+      }
     })
 
     var handleEvent = function (id, event, handler) {
