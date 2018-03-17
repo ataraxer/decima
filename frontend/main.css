@@ -189,19 +189,38 @@ input:focus {
 }
 
 footer {
+  z-index: 999;
   background-color: rgba(255, 255, 255, 0.9);
   position: fixed;
   width: 100%;
   bottom: 0;
 }
 
+.add-entry {
+  display: none;
+  z-index: 99;
+  cursor: pointer;
+  position: fixed;
+  color: #46b980;
+  font-size: 2em;
+  bottom: 0;
+  right: 0;
+  padding: 0.4em;
+  /*background-color: rgba(255, 255, 255, 0.9);*/
+}
+
 @media only screen and (max-width: 768px) {
   footer {
     position: relative !important;
+    background-color: white;
   }
 
   .main {
     margin-bottom: 0;
+  }
+
+  .add-entry {
+    display: block;
   }
 }
 
@@ -238,7 +257,6 @@ a:hover {
 }
 
 .input-button {
-  z-index: 999;
   cursor: pointer;
   display: block;
   float: right;
