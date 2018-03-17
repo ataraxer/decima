@@ -44,14 +44,6 @@ form fieldset {
   max-width: 70%;
 }
 
-@media only screen and (max-width: 768px) {
-  .wide-content {
-    padding: 0.5em 0.5em;
-    width: 100%;
-    max-width: 100%;
-  }
-}
-
 h1, h2 {
   font-weight: 300;
 }
@@ -184,8 +176,8 @@ input:focus {
 }
 
 .main {
-  margin-top: 58px;
-  margin-bottom: 55px;
+  margin-top: 3.6em;
+  margin-bottom: 3.4em;
 }
 
 footer {
@@ -209,7 +201,13 @@ footer {
   /*background-color: rgba(255, 255, 255, 0.9);*/
 }
 
-@media only screen and (max-width: 768px) {
+@media only screen and (max-device-width: 375px) {
+  .wide-content {
+    padding: 0.5em 0.5em;
+    width: 100%;
+    max-width: 100%;
+  }
+
   footer {
     position: relative !important;
     background-color: white;
@@ -223,6 +221,16 @@ footer {
     display: block;
     animation-duration: 0.5s;
     -webkit-animation-duration: 0.5s;
+  }
+}
+
+@media only screen
+    and (min-device-width: 768px)
+    and (max-width: 960px) {
+  .wide-content {
+    padding: 0.5em 0.5em;
+    width: 100%;
+    max-width: 100%;
   }
 }
 
