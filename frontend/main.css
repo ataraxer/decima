@@ -65,11 +65,11 @@ h1, h2 {
 }
 
 .error {
-  background-color: #ee6e73;
+  background-color: #FF5050;
   color: #fff;
   font-weight: 500;
   border-radius: 4px;
-  padding: 12px;
+  padding: .5em .6em;
 }
 
 .log {

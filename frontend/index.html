@@ -48,6 +48,7 @@
   <div class="main">
     <div class="wrapper">
       <div class="content">
+        <div id="error-card"></div>
         <div id="tags" class="tags"></div>
         <hr/>
         <div class="log" id="log"></div>
@@ -103,6 +104,7 @@
     <div class="error">
       {{error}}
     </div>
+    <hr/>
   </script>
 
   <script>
@@ -120,16 +122,19 @@
     var sortedLogTemplate = loadTemplate('sorted-log-template');
     var errorTemplate = loadTemplate('error-template');
 
-    var reportError = function (error) {
-      var content = errorTemplate({ error: error });
-      document.getElementById('log').innerHTML = content;
-    };
-
+    var log = document.getElementById('log');
+    var tags = document.getElementById('tags');
+    var errorCard = document.getElementById('error-card');
     var addEntryButton = document.getElementById('add-entry');
     var entryDoneButton = document.getElementById('entry-done');
     var entryInput = document.getElementById('entry-input');
     var filterInput = document.getElementById('filter-input');
     var clearFilterInput = document.getElementById('clear-filter-input');
+
+    var reportError = function (error) {
+      var content = errorTemplate({ error: error });
+      errorCard.innerHTML = content;
+    };
 
     window.onscroll = function (event) {
       if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
@@ -169,11 +174,10 @@
     document
       .getElementById('insert-hashtag')
       .addEventListener('click', function (event) {
-        // event.preventDefault();
+        event.preventDefault();
         // event.stopPropagation();
-        var input = document.getElementById('entry-input')
-        input.value += '#';
-        input.focus();
+        entryInput.value += '#';
+        entryInput.focus();
         showEntryDoneButton();
       });
 
@@ -214,7 +218,7 @@
         .then(function (response) {
           if (response.success) {
             var content = tagsTemplate(response.content);
-            document.getElementById('tags').innerHTML = content;
+            tags.innerHTML = content;
           } else {
             reportError(response.content);
           }
@@ -243,7 +247,7 @@
         .then(function (response) {
           if (response.success) {
             var content = logTemplate(response.content);
-            document.getElementById('log').innerHTML = content;
+            log.innerHTML = content;
           } else {
             reportError(response.content);
           }
@@ -272,7 +276,7 @@
         .then(function (response) {
           if (response.success) {
             var content = sortedLogTemplate(response.content);
-            document.getElementById('log').innerHTML = content;
+            log.innerHTML = content;
           } else {
             reportError(response.content);
           }
