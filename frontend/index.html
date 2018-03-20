@@ -150,11 +150,18 @@
     var showClearFilterInput = function () { show(clearFilterInput) };
     var hideClearFilterInput = function () { hide(clearFilterInput) };
 
-    clearFilterInput.addEventListener('click', function (event) {
+    var clearFilter = function () {
       filterInput.value = '';
       hideClearFilterInput();
       fetchSortedLog();
-    });
+    };
+
+    var clearEntry = function () {
+      entryInput.value = '';
+      hideEntryDoneButton();
+    };
+
+    clearFilterInput.addEventListener('click', clearFilter);
 
     var showEntryDoneButton = function () { show(entryDoneButton) };
     var hideEntryDoneButton = function () { hide(entryDoneButton) };
@@ -307,8 +314,7 @@
         })
         .then(function (result) {
           scrollToBottom();
-          entryInput.value = "";
-          hideEntryDoneButton();
+          clearEntry();
         });
     }
 
@@ -387,6 +393,23 @@
     ) {
       entryInput.focus();
     }
+
+    document.onkeydown = function (event) {
+      var isEscape = false;
+
+      /* ESC */
+      if (event.keyCode == 27) {
+        if (document.activeElement === entryInput && entryInput.value !== '') {
+          clearEntry();
+        } else if (document.activeElement === filterInput) {
+          clearFilter();
+        } else if (filterInput.value !== '') {
+          clearFilter();
+        }
+
+        return false;
+      }
+    };
   })();
   </script>
 </body>
