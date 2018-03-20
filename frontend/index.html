@@ -380,6 +380,13 @@
 
     fetchTags();
     fetchSortedLog();
+
+    if (
+      window.matchMedia &&
+      window.matchMedia("(min-device-width: 768px)").matches
+    ) {
+      entryInput.focus();
+    }
   })();
   </script>
 </body>
