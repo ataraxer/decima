@@ -202,6 +202,10 @@ footer {
 }
 
 @media only screen and (max-device-width: 375px) {
+  .content {
+    padding: 0;
+  }
+
   .wide-content {
     padding: 0.5em 0.5em;
     width: 100%;
@@ -251,6 +255,7 @@ a:hover {
 
 .fa-li {
   top: 0.3em;
+  left: -1.6em;
   width: 1.8em;
 }
 
