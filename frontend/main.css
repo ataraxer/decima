@@ -191,6 +191,10 @@ input {
   margin: 0 !important;
 }
 
+.faded {
+  opacity: 0.7;
+}
+
 input:focus {
   border-color: #46b980 !important;
 }

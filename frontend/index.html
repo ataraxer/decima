@@ -49,7 +49,7 @@
     </div>
   </header>
 
-  <div class="main">
+  <div id="main" class="main">
     <div class="wrapper">
       <div class="content">
         <div id="shadow-tag-suggestions" class="tag-suggestions filter-suggestions hidden invisible"></div>
@@ -57,27 +57,27 @@
         <div class="log" id="log"></div>
       </div>
     </div>
-
-    <footer class="wrapper">
-      <div class="wide-content">
-        <div id="entry-tag-suggestions" class="tag-suggestions entry-suggestions hidden"></div>
-        <form id="entry-form" class="pure-form" action="#">
-          <fieldset>
-            <div class="rich-input">
-              <span id="insert-hashtag" class="input-button-left">
-                <i class="fa fa-hashtag"></i>
-              </span>
-              <input id="entry-input" type="text" placeholder="New entry..." autocapitalize="off" autocomplete="off" class="input-button-padding input-button-padding-left">
-              <span id="shadow-suggest" class="shadow-suggest"></span>
-              <span id="entry-done" class="input-button hidden">
-                <i class="fas fa-check"></i>
-              </span>
-            </div>
-          </fieldset>
-        </form>
-      </div>
-    </footer>
   </div>
+
+  <footer class="wrapper">
+    <div class="wide-content">
+      <div id="entry-tag-suggestions" class="tag-suggestions entry-suggestions hidden"></div>
+      <form id="entry-form" class="pure-form" action="#">
+        <fieldset>
+          <div class="rich-input">
+            <span id="insert-hashtag" class="input-button-left">
+              <i class="fa fa-hashtag"></i>
+            </span>
+            <input id="entry-input" type="text" placeholder="New entry..." autocapitalize="off" autocomplete="off" class="input-button-padding input-button-padding-left">
+            <span id="shadow-suggest" class="shadow-suggest"></span>
+            <span id="entry-done" class="input-button hidden">
+              <i class="fas fa-check"></i>
+            </span>
+          </div>
+        </fieldset>
+      </form>
+    </div>
+  </footer>
 
   <script id="log-template" type="text/x-handlebars-template">
     <!--<h3 class="capitalized">9th / Thursday</h2>-->
@@ -127,6 +127,7 @@
     var sortedLogTemplate = loadTemplate('sorted-log-template');
     var errorTemplate = loadTemplate('error-template');
 
+    var main = document.getElementById('main');
     var log = document.getElementById('log');
     var tagSuggestions = document.getElementById('tag-suggestions');
     var shadowTagSuggestions = document.getElementById('shadow-tag-suggestions');
@@ -173,6 +174,7 @@
     var hideEntrySuggestions = function () {
       hide(entryTagSuggestions)
       shadowSuggest.innerHTML = '';
+      main.classList.remove('faded');
     };
 
     var clearFilter = function () {
@@ -418,6 +420,7 @@
         var lastTag = tagRegex.exec(entryInput.value)[0];
         var suggestedText = tag.replace(lastTag, '') + ' ';
         shadowSuggest.innerHTML = invisibleText + suggestedText;
+        main.classList.add('faded');
       }
     };
 
