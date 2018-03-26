@@ -39,6 +39,7 @@
             <span id="clear-filter-input" class="input-button hidden">
               <i class="fa fa-times"></i>
             </span>
+            <span id="filter-shadow-suggest" class="shadow-suggest filter-shadow-suggest"></span>
           </div>
         </fieldset>
       </form>
@@ -69,7 +70,7 @@
               <i class="fa fa-hashtag"></i>
             </span>
             <input id="entry-input" type="text" placeholder="New entry..." autocapitalize="off" autocomplete="off" class="input-button-padding input-button-padding-left">
-            <span id="shadow-suggest" class="shadow-suggest"></span>
+            <span id="shadow-suggest" class="shadow-suggest entry-shadow-suggest"></span>
             <span id="entry-done" class="input-button hidden">
               <i class="fas fa-check"></i>
             </span>
@@ -139,6 +140,7 @@
     var filterInput = document.getElementById('filter-input');
     var clearFilterInput = document.getElementById('clear-filter-input');
     var shadowSuggest = document.getElementById('shadow-suggest');
+    var filterShadowSuggest = document.getElementById('filter-shadow-suggest');
 
     var reportError = function (error) {
       var content = errorTemplate({ error: error });
@@ -179,8 +181,12 @@
 
     var clearFilter = function () {
       filterInput.value = '';
-      hideTagSuggestions();
-      hideClearFilterInput();
+      filterShadowSuggest.innerHTML = '';
+      if (document.activeElement === filterInput) {
+        suggestFilterTags(tags);
+      } else {
+        hideClearFilterInput();
+      }
       fetchSortedLog();
     };
 
@@ -406,37 +412,65 @@
     var suggestedEntryTags = [];
     var suggestedEntryTagsFocus = 0;
 
-    var updateShadowSuggest = function () {
+    var suggestedFilterTags = [];
+    var suggestedFilterTagsFocus = 0;
+
+    var updateShadowSuggest = function (suggestElement, originalText, suggestedText) {
+      var invisiblePart = new Handlebars.SafeString(
+        "<span class='invisible'>" +
+        suggestedText.substring(0, originalText.length) +
+        "</span>"
+      );
+
+      var visiblePart = suggestedText.substring(originalText.length);
+      suggestElement.innerHTML = invisiblePart + visiblePart;
+    };
+
+    var updateEntryShadowSuggest = function () {
       if (suggestedEntryTags.length > 0) {
         var tag = '#' + suggestedEntryTags[suggestedEntryTagsFocus];
         var currentText = entryInput.value;
-
         var suggestedText = currentText.replace(tagRegex, tag);
-
-        var invisiblePart = new Handlebars.SafeString(
-          "<span class='invisible'>" +
-          suggestedText.substring(0, currentText.length) +
-          "</span>"
-        );
-
-        var visiblePart = suggestedText.substring(currentText.length);
-
-        shadowSuggest.innerHTML = invisiblePart + visiblePart;
+        updateShadowSuggest(shadowSuggest, currentText, suggestedText);
         main.classList.add('faded');
+      }
+    };
+
+    var updateFilterShadowSuggest = function () {
+      if (suggestedFilterTags.length > 0) {
+        var currentText = filterInput.value;
+        var suggestedText = suggestedFilterTags[suggestedFilterTagsFocus];
+        updateShadowSuggest(filterShadowSuggest, currentText, suggestedText);
+      } else {
+        filterShadowSuggest.innerHTML = '';
       }
     };
 
     var processFilterInput = processForm(function (target) {
       if (target.value) {
-        showClearFilterInput();
-        var matchingTags = tags.filter(function (tag) {
-          return tag.startsWith(target.value);
-        });
-        suggestFilterTags(matchingTags);
         fetchLog(target.value);
       } else {
-        suggestFilterTags(tags);
         fetchSortedLog();
+      }
+    })
+
+    var suggestFilterInput = processForm(function (target) {
+      if (target.value) {
+        suggestedFilterTagsFocus = 0;
+        suggestedFilterTags = tags.filter(function (tag) {
+          return tag.startsWith(target.value);
+        });
+
+        updateFilterShadowSuggest();
+
+        if (suggestedFilterTags.length === 1 && suggestedFilterTags[0] === target.value) {
+          hideTagSuggestions();
+        } else {
+          suggestFilterTags(suggestedFilterTags);
+        }
+      } else {
+        suggestFilterTags(tags);
+        filterShadowSuggest.innerHTML = '';
       }
     })
 
@@ -452,7 +486,7 @@
           return tag.startsWith(incompleteTag);
         });
         suggestEntryTags(suggestedEntryTags);
-        updateShadowSuggest();
+        updateEntryShadowSuggest();
       } else {
         hideEntrySuggestions();
       }
@@ -495,6 +529,7 @@
     };
 
     handleEvent('filter-input', 'input', debounce(processFilterInput, 250));
+    handleEvent('filter-input', 'input', suggestFilterInput);
     handleEvent('entry-input', 'input', processEntryInput);
     handleEvent('entry-form', 'submit', processEntry);
 
@@ -516,7 +551,13 @@
         if (document.activeElement === entryInput && entryInput.value !== '') {
           clearEntry();
         } else if (document.activeElement === filterInput) {
-          clearFilter();
+          if (filterInput.value === '') {
+            hideTagSuggestions();
+            hideClearFilterInput();
+            filterInput.blur();
+          } else {
+            clearFilter();
+          }
         } else if (filterInput.value !== '') {
           clearFilter();
         }
@@ -530,12 +571,26 @@
             var tag = '#' + suggestedEntryTags[suggestedEntryTagsFocus];
             entryInput.value = entryInput.value.replace(tagRegex, tag + ' ');
             hideEntrySuggestions();
-            return false;
           } else {
             suggestedEntryTagsFocus += 1;
             suggestedEntryTagsFocus %= suggestedEntryTags.length;
-            updateShadowSuggest();
+            updateEntryShadowSuggest();
           }
+
+          return false;
+
+        } else if (document.activeElement === filterInput) {
+          if (suggestedFilterTags.length == 1) {
+            var tag = suggestedFilterTags[suggestedFilterTagsFocus];
+            filterInput.value = tag;
+            hideTagSuggestions();
+            fetchLog(filterInput.value);
+          } else {
+            suggestedFilterTagsFocus += 1;
+            suggestedFilterTagsFocus %= suggestedFilterTags.length;
+            updateFilterShadowSuggest();
+          }
+
           return false;
         }
 
