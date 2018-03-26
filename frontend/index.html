@@ -411,15 +411,17 @@
         var tag = '#' + suggestedEntryTags[suggestedEntryTagsFocus];
         var currentText = entryInput.value;
 
-        var invisibleText = new Handlebars.SafeString(
+        var suggestedText = currentText.replace(tagRegex, tag);
+
+        var invisiblePart = new Handlebars.SafeString(
           "<span class='invisible'>" +
-          currentText +
+          suggestedText.substring(0, currentText.length) +
           "</span>"
         );
 
-        var lastTag = tagRegex.exec(entryInput.value)[0];
-        var suggestedText = tag.replace(lastTag, '') + ' ';
-        shadowSuggest.innerHTML = invisibleText + suggestedText;
+        var visiblePart = suggestedText.substring(currentText.length);
+
+        shadowSuggest.innerHTML = invisiblePart + visiblePart;
         main.classList.add('faded');
       }
     };
