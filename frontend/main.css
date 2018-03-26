@@ -97,13 +97,22 @@ code {
   padding: 1px 5px;
 }
 
-.tag-suggestions {
-  padding: .5em 0 0 0;
+.filter-suggestions {
+  padding: 0;
+  padding-top: .5em;
+}
+
+.entry-suggestions {
+  padding: 0;
+  padding-bottom: .4em;
+}
+
+.inverted code {
+  background-color: #fff;
+  color: #46b980;
 }
 
 .tag-suggestions code {
-  background-color: #fff;
-  color: #46b980;
   line-height: 1.6em;
 }
 
@@ -276,7 +285,7 @@ a:hover {
 }
 
 .invisible {
-  visibility: none;
+  visibility: hidden;
 }
 
 .float-left {
@@ -313,5 +322,17 @@ a:hover {
   left: 0;
   padding: 0.66em;
   color: #aaa;
+}
+
+.shadow-suggest {
+  display: inline-block;
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: .5em .6em;
+  padding-left: 2.1em;
+  border: 1px solid rgba(0, 0, 0, 0);
+  z-index: 1;
+  opacity: 0.5;
 }
 
