@@ -66,6 +66,7 @@ h1, h2 {
 
 .log {
   line-height: 1.6em;
+  padding-top: .3em;
 }
 
 .log h3 {
@@ -94,6 +95,16 @@ code {
   /*background-color: #71c6a5;*/ /* green */
   /*padding: 3px 5px;*/
   padding: 1px 5px;
+}
+
+.tag-suggestions {
+  padding: .5em 0 0 0;
+}
+
+.tag-suggestions code {
+  background-color: #fff;
+  color: #46b980;
+  line-height: 1.6em;
 }
 
 hr {
@@ -156,7 +167,7 @@ header {
   /*background-color: #46b980;*/
   /*background-color: rgba(34, 160, 219, 0.9);*/
   background-color: rgba(70, 185, 128, 0.9);
-  z-index: 1;
+  z-index: 99999;
   padding: 0.5em 0em;
   position: fixed;
   width: 100%;
@@ -176,7 +187,7 @@ input:focus {
 }
 
 .main {
-  margin-top: 3.6em;
+  margin-top: 3.35em;
   margin-bottom: 3.4em;
 }
 
@@ -219,6 +230,7 @@ footer {
 
   .main {
     margin-bottom: 0;
+    position: relative;
   }
 
   .add-entry {
@@ -261,6 +273,10 @@ a:hover {
 
 .hidden {
   display: none;
+}
+
+.invisible {
+  visibility: none;
 }
 
 .float-left {

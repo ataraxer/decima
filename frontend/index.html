@@ -43,14 +43,17 @@
         </fieldset>
       </form>
     </div>
+
+    <div class="content">
+      <div id="tag-suggestions" class="tag-suggestions hidden"></div>
+    </div>
   </header>
 
   <div class="main">
     <div class="wrapper">
       <div class="content">
+        <div id="shadow-tag-suggestions" class="tag-suggestions hidden invisible"></div>
         <div id="error-card"></div>
-        <div id="tags" class="tags"></div>
-        <hr/>
         <div class="log" id="log"></div>
       </div>
     </div>
@@ -123,7 +126,8 @@
     var errorTemplate = loadTemplate('error-template');
 
     var log = document.getElementById('log');
-    var tags = document.getElementById('tags');
+    var tagSuggestions = document.getElementById('tag-suggestions');
+    var shadowTagSuggestions = document.getElementById('shadow-tag-suggestions');
     var errorCard = document.getElementById('error-card');
     var addEntryButton = document.getElementById('add-entry');
     var entryDoneButton = document.getElementById('entry-done');
@@ -147,11 +151,22 @@
     var hide = function (element) { element.classList.add('hidden') };
     var show = function (element) { element.classList.remove('hidden') };
 
+    var hideTagSuggestions = function () {
+      hide(tagSuggestions);
+      hide(shadowTagSuggestions);
+    };
+
+    var showTagSuggestions = function () {
+      show(tagSuggestions)
+      show(shadowTagSuggestions);
+    };
+
     var showClearFilterInput = function () { show(clearFilterInput) };
     var hideClearFilterInput = function () { hide(clearFilterInput) };
 
     var clearFilter = function () {
       filterInput.value = '';
+      hideTagSuggestions();
       hideClearFilterInput();
       fetchSortedLog();
     };
@@ -192,6 +207,24 @@
       window.scrollTo(0, document.body.scrollHeight);
     };
 
+    filterInput.addEventListener('focus', function (event) {
+      var wasAtTheBottom = (
+        (window.innerHeight + window.scrollY) >=
+        document.body.offsetHeight
+      )
+
+      showClearFilterInput();
+      suggestTags(tags);
+      if (wasAtTheBottom) scrollToBottom();
+    });
+
+    filterInput.addEventListener('blur', function (event) {
+      setTimeout(function () {
+        hideTagSuggestions();
+        if (!filterInput.value) { hideClearFilterInput(); }
+      }, 200);
+    });
+
     addEntryButton.addEventListener('click', function (event) {
       entryInput.focus();
     });
@@ -201,11 +234,25 @@
         var filter = event.target.innerHTML.replace('#', '');
         filterInput.value = filter;
         showClearFilterInput();
+        hideTagSuggestions();
         fetchLog(filter);
       }
     }
 
     document.addEventListener('click', handleClick);
+
+    var tags = [];
+
+    var suggestTags = function (tags) {
+      if (tags.length > 0) {
+        showTagSuggestions();
+        var content = tagsTemplate(tags);
+        tagSuggestions.innerHTML = content;
+        shadowTagSuggestions.innerHTML = content;
+      } else {
+        hideTagSuggestions();
+      }
+    };
 
     var fetchTags = function () {
       fetch('api/tags')
@@ -224,8 +271,7 @@
         })
         .then(function (response) {
           if (response.success) {
-            var content = tagsTemplate(response.content);
-            tags.innerHTML = content;
+            tags = response.content;
           } else {
             reportError(response.content);
           }
@@ -330,18 +376,14 @@
     var processFilterInput = processForm(function (target) {
       if (target.value) {
         showClearFilterInput();
+        var matchingTags = tags.filter(function (tag) {
+          return tag.startsWith(target.value);
+        });
+        suggestTags(matchingTags);
         fetchLog(target.value);
       } else {
-        hideClearFilterInput();
+        suggestTags(tags);
         fetchSortedLog();
-      }
-    })
-
-    var toggleFilterClearButton = processForm(function (target) {
-      if (target.value) {
-        showClearFilterInput();
-      } else {
-        hideClearFilterInput();
       }
     })
 
@@ -380,7 +422,6 @@
       };
     };
 
-    handleEvent('filter-input', 'input', toggleFilterClearButton);
     handleEvent('filter-input', 'input', debounce(processFilterInput, 250));
     handleEvent('entry-form', 'submit', processEntry);
 
