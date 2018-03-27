@@ -3,8 +3,10 @@
     return new Handlebars.SafeString(marked.inlineLexer(data, [], {}));
   });
 
+  var select = document.getElementById.bind(document);
+
   var loadTemplate = function (id) {
-    return Handlebars.compile(document.getElementById(id).innerHTML);
+    return Handlebars.compile(select(id).innerHTML);
   };
 
   var tagsTemplate = loadTemplate('tags-template');
@@ -12,19 +14,21 @@
   var sortedLogTemplate = loadTemplate('sorted-log-template');
   var errorTemplate = loadTemplate('error-template');
 
-  var main = document.getElementById('main');
-  var log = document.getElementById('log');
-  var tagSuggestions = document.getElementById('tag-suggestions');
-  var shadowTagSuggestions = document.getElementById('shadow-tag-suggestions');
-  var entryTagSuggestions = document.getElementById('entry-tag-suggestions');
-  var errorCard = document.getElementById('error-card');
-  var addEntryButton = document.getElementById('add-entry');
-  var entryDoneButton = document.getElementById('entry-done');
-  var entryInput = document.getElementById('entry-input');
-  var filterInput = document.getElementById('filter-input');
-  var clearFilterInput = document.getElementById('clear-filter-input');
-  var shadowSuggest = document.getElementById('shadow-suggest');
-  var filterShadowSuggest = document.getElementById('filter-shadow-suggest');
+  var main = select('main');
+  var log = select('log');
+  var errorCard = select('error-card');
+
+  var entryInput = select('entry-input');
+  var entrySuggest = select('shadow-suggest');
+  var entryTagSuggestions = select('entry-tag-suggestions');
+  var entryButtonAdd = select('add-entry');
+  var entryButtonDone = select('entry-done');
+
+  var filterInput = select('filter-input');
+  var filterSuggest = select('filter-shadow-suggest');
+  var filterTagSuggestions = select('tag-suggestions');
+  var filterShadowTagSuggestions = select('shadow-tag-suggestions');
+  var filterButtonClear = select('clear-filter-input');
 
   var reportError = function (error) {
     var content = errorTemplate({ error: error });
@@ -33,9 +37,9 @@
 
   window.onscroll = function (event) {
     if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
-      addEntryButton.classList.add('hidden');
+      entryButtonAdd.classList.add('hidden');
     } else {
-      addEntryButton.classList.remove('hidden');
+      entryButtonAdd.classList.remove('hidden');
     }
   };
 
@@ -43,29 +47,29 @@
   var show = function (element) { element.classList.remove('hidden') };
 
   var hideTagSuggestions = function () {
-    hide(tagSuggestions);
-    hide(shadowTagSuggestions);
+    hide(filterTagSuggestions);
+    hide(filterShadowTagSuggestions);
   };
 
   var showTagSuggestions = function () {
-    show(tagSuggestions)
-    show(shadowTagSuggestions);
+    show(filterTagSuggestions)
+    show(filterShadowTagSuggestions);
   };
 
-  var showClearFilterInput = function () { show(clearFilterInput) };
-  var hideClearFilterInput = function () { hide(clearFilterInput) };
+  var showClearFilterInput = function () { show(filterButtonClear) };
+  var hideClearFilterInput = function () { hide(filterButtonClear) };
 
   var showEntrySuggestions = function () { show(entryTagSuggestions) };
 
   var hideEntrySuggestions = function () {
     hide(entryTagSuggestions)
-    shadowSuggest.innerHTML = '';
+    entrySuggest.innerHTML = '';
     main.classList.remove('faded');
   };
 
   var clearFilter = function () {
     filterInput.value = '';
-    filterShadowSuggest.innerHTML = '';
+    filterSuggest.innerHTML = '';
     if (document.activeElement === filterInput) {
       suggestFilterTags(tags);
     } else {
@@ -80,12 +84,12 @@
     hideEntryDoneButton();
   };
 
-  clearFilterInput.addEventListener('click', clearFilter);
+  filterButtonClear.addEventListener('click', clearFilter);
 
-  var showEntryDoneButton = function () { show(entryDoneButton) };
-  var hideEntryDoneButton = function () { hide(entryDoneButton) };
+  var showEntryDoneButton = function () { show(entryButtonDone) };
+  var hideEntryDoneButton = function () { hide(entryButtonDone) };
 
-  entryDoneButton.addEventListener('click', function (event) {
+  entryButtonDone.addEventListener('click', function (event) {
     saveEvent(entryInput.value);
   });
 
@@ -97,11 +101,9 @@
     }
   });
 
-  document
-    .getElementById('insert-hashtag')
+  select('insert-hashtag')
     .addEventListener('click', function (event) {
       event.preventDefault();
-      // event.stopPropagation();
       entryInput.value += '#';
       entryInput.focus();
       showEntryDoneButton();
@@ -129,7 +131,7 @@
     }, 200);
   });
 
-  addEntryButton.addEventListener('click', function (event) {
+  entryButtonAdd.addEventListener('click', function (event) {
     entryInput.focus();
   });
 
@@ -168,8 +170,8 @@
     if (tags.length > 0) {
       showTagSuggestions();
       var content = tagsTemplate(tags);
-      tagSuggestions.innerHTML = content;
-      shadowTagSuggestions.innerHTML = content;
+      filterTagSuggestions.innerHTML = content;
+      filterShadowTagSuggestions.innerHTML = content;
     } else {
       hideTagSuggestions();
     }
@@ -319,9 +321,9 @@
         var tag = '#' + suggestedEntryTags[focus];
         var currentText = entryInput.value;
         var suggestedText = currentText.replace(tagRegex, tag);
-        updateShadowSuggest(shadowSuggest, currentText, suggestedText);
+        updateShadowSuggest(entrySuggest, currentText, suggestedText);
       } else {
-        shadowSuggest.innerHTML = '';
+        entrySuggest.innerHTML = '';
       }
       main.classList.add('faded');
     }
@@ -334,12 +336,12 @@
       if (focus >= 0) {
         var currentText = filterInput.value;
         var suggestedText = suggestedFilterTags[focus];
-        updateShadowSuggest(filterShadowSuggest, currentText, suggestedText);
+        updateShadowSuggest(filterSuggest, currentText, suggestedText);
       } else {
-        filterShadowSuggest.innerHTML = '';
+        filterSuggest.innerHTML = '';
       }
     } else {
-      filterShadowSuggest.innerHTML = '';
+      filterSuggest.innerHTML = '';
     }
   };
 
@@ -368,7 +370,7 @@
       }
     } else {
       suggestFilterTags(tags);
-      filterShadowSuggest.innerHTML = '';
+      filterSuggest.innerHTML = '';
     }
   })
 
@@ -400,7 +402,7 @@
   })
 
   var handleEvent = function (id, event, handler) {
-    var element = document.getElementById(id);
+    var element = select(id);
 
     if (element.addEventListener) {
       element.addEventListener(event, handler);
