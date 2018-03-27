@@ -255,6 +255,7 @@
           var tag = '#' + event.target.innerHTML;
           entryInput.value = entryInput.value.replace(tagRegex, tag + ' ');
           hideEntrySuggestions();
+          entryInput.focus();
         } else {
           var filter = event.target.innerHTML.replace('#', '');
           filterInput.value = filter;
@@ -410,10 +411,10 @@
     }
 
     var suggestedEntryTags = [];
-    var suggestedEntryTagsFocus = 0;
+    var suggestedEntryTagsFocus = -1;
 
     var suggestedFilterTags = [];
-    var suggestedFilterTagsFocus = 0;
+    var suggestedFilterTagsFocus = -1;
 
     var updateShadowSuggest = function (suggestElement, originalText, suggestedText) {
       var invisiblePart = new Handlebars.SafeString(
@@ -428,19 +429,31 @@
 
     var updateEntryShadowSuggest = function () {
       if (suggestedEntryTags.length > 0) {
-        var tag = '#' + suggestedEntryTags[suggestedEntryTagsFocus];
-        var currentText = entryInput.value;
-        var suggestedText = currentText.replace(tagRegex, tag);
-        updateShadowSuggest(shadowSuggest, currentText, suggestedText);
+        var focus = (suggestedEntryTags.length == 1) ? 0 : suggestedEntryTagsFocus;
+
+        if (focus >= 0) {
+          var tag = '#' + suggestedEntryTags[focus];
+          var currentText = entryInput.value;
+          var suggestedText = currentText.replace(tagRegex, tag);
+          updateShadowSuggest(shadowSuggest, currentText, suggestedText);
+        } else {
+          shadowSuggest.innerHTML = '';
+        }
         main.classList.add('faded');
       }
     };
 
     var updateFilterShadowSuggest = function () {
       if (suggestedFilterTags.length > 0) {
-        var currentText = filterInput.value;
-        var suggestedText = suggestedFilterTags[suggestedFilterTagsFocus];
-        updateShadowSuggest(filterShadowSuggest, currentText, suggestedText);
+        var focus = (suggestedFilterTags.length == 1) ? 0 : suggestedFilterTagsFocus;
+
+        if (focus >= 0) {
+          var currentText = filterInput.value;
+          var suggestedText = suggestedFilterTags[focus];
+          updateShadowSuggest(filterShadowSuggest, currentText, suggestedText);
+        } else {
+          filterShadowSuggest.innerHTML = '';
+        }
       } else {
         filterShadowSuggest.innerHTML = '';
       }
@@ -456,7 +469,8 @@
 
     var suggestFilterInput = processForm(function (target) {
       if (target.value) {
-        suggestedFilterTagsFocus = 0;
+        suggestedFilterTagsFocus = -1;
+
         suggestedFilterTags = tags.filter(function (tag) {
           return tag.startsWith(target.value);
         });
@@ -481,10 +495,12 @@
 
       if (lastTag) {
         var incompleteTag = lastTag[0].replace('#', '');
-        suggestedEntryTagsFocus = 0;
+        suggestedEntryTagsFocus = -1;
+
         suggestedEntryTags = tags.filter(function (tag) {
           return tag.startsWith(incompleteTag);
         });
+
         suggestEntryTags(suggestedEntryTags);
         updateEntryShadowSuggest();
       } else {
@@ -568,12 +584,15 @@
       } else if (event.keyCode == 9) {
         if (document.activeElement == entryInput) {
           if (suggestedEntryTags.length == 1) {
-            var tag = '#' + suggestedEntryTags[suggestedEntryTagsFocus];
+            var tag = '#' + suggestedEntryTags[0];
             entryInput.value = entryInput.value.replace(tagRegex, tag + ' ');
             hideEntrySuggestions();
           } else {
             suggestedEntryTagsFocus += 1;
-            suggestedEntryTagsFocus %= suggestedEntryTags.length;
+            suggestedEntryTagsFocus %= (suggestedEntryTags.length + 1);
+            if (suggestedEntryTagsFocus === suggestedEntryTags.length) {
+              suggestedEntryTagsFocus = -1;
+            }
             updateEntryShadowSuggest();
           }
 
@@ -581,13 +600,16 @@
 
         } else if (document.activeElement === filterInput) {
           if (suggestedFilterTags.length == 1) {
-            var tag = suggestedFilterTags[suggestedFilterTagsFocus];
+            var tag = suggestedFilterTags[0];
             filterInput.value = tag;
             hideTagSuggestions();
             fetchLog(filterInput.value);
           } else {
             suggestedFilterTagsFocus += 1;
-            suggestedFilterTagsFocus %= suggestedFilterTags.length;
+            suggestedFilterTagsFocus %= (suggestedFilterTags.length + 1);
+            if (suggestedFilterTagsFocus === suggestedFilterTags.length) {
+              suggestedFilterTagsFocus = -1;
+            }
             updateFilterShadowSuggest();
           }
 
@@ -596,6 +618,24 @@
 
       // space
       } else if (event.keyCode == 32) {
+        if (document.activeElement == entryInput) {
+          if (suggestedEntryTagsFocus >= 0) {
+            var tag = '#' + suggestedEntryTags[suggestedEntryTagsFocus];
+            entryInput.value = entryInput.value.replace(tagRegex, tag + ' ');
+            hideEntrySuggestions();
+            return false;
+          }
+
+        } else if (document.activeElement === filterInput) {
+          if (suggestedFilterTagsFocus >= 0) {
+            var tag = suggestedFilterTags[suggestedFilterTagsFocus];
+            filterInput.value = tag;
+            hideTagSuggestions();
+            fetchLog(filterInput.value);
+            return false;
+          }
+
+        }
       }
     };
   })();
