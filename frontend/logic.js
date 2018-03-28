@@ -163,7 +163,8 @@
         return fetchTags();
       })
       .then(function (result) {
-        return fetchSortedLog();
+        var filter = select('filter-input').value;
+        return filter ? fetchLog(filter) : fetchSortedLog();
       });
   };
 
