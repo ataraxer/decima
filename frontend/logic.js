@@ -254,6 +254,7 @@
         suggestEntryTags(suggestedEntryTags);
         updateEntryShadowSuggest();
       } else {
+        suggestedEntryTags = [];
         hideEntrySuggestions();
       }
     }));
@@ -441,6 +442,7 @@
           suggestFilterTags(suggestedFilterTags);
         }
       } else {
+        suggestedFilterTags = [];
         suggestFilterTags(tags);
         filterSuggest.innerHTML = '';
       }
