@@ -61,49 +61,38 @@
     errorCard.innerHTML = content;
   };
 
-  var fetchTags = function () {
-    return fetch('api/tags')
-      .then(function (response) {
-        var futureContent = null;
+  var httpRequest = function () {
+    return fetch.apply(this, arguments).then(function (response) {
+      var futureContent = null;
+      var success = response.status === 200;
+      var badRequest = response.status === 400;
+      var isJson = success || badRequest;
+      var futureContent = isJson ? response.json() : response.text();
 
-        if (response.status == 200 || response.status == 400) {
-          futureContent = response.json();
-        } else {
-          futureContent = response.text();
-        }
-
-        return futureContent.then(function (content) {
+      return futureContent
+        .then(function (content) {
           return { success: response.status == 200, content: content };
+        })
+        .catch(function (reason) {
+          console.error('request failed', reason);
+          reportError(reason);
         });
-      })
+    });
+  };
+
+  var fetchTags = function () {
+    return httpRequest('api/tags')
       .then(function (response) {
         if (response.success) {
           tags = response.content;
         } else {
           reportError(response.content);
         }
-      })
-      .catch(function (reason) {
-        console.error('request failed', reason);
-        reportError(reason);
       });
   };
 
   var fetchLog = function (filter) {
-    return fetch('api/log?filter=' + filter)
-      .then(function (response) {
-        var futureContent = null;
-
-        if (response.status == 200 || response.status == 400) {
-          futureContent = response.json();
-        } else {
-          futureContent = response.text();
-        }
-
-        return futureContent.then(function (content) {
-          return { success: response.status == 200, content: content };
-        });
-      })
+    return httpRequest('api/log?filter=' + filter)
       .then(function (response) {
         if (response.success) {
           var content = logTemplate(response.content);
@@ -111,28 +100,11 @@
         } else {
           reportError(response.content);
         }
-      })
-      .catch(function (reason) {
-        console.error('request failed', reason);
-        reportError(reason);
       });
   };
 
   var fetchSortedLog = function () {
-    return fetch('api/log-by-date')
-      .then(function (response) {
-        var futureContent = null;
-
-        if (response.status == 200 || response.status == 400) {
-          futureContent = response.json();
-        } else {
-          futureContent = response.text();
-        }
-
-        return futureContent.then(function (content) {
-          return { success: response.status == 200, content: content };
-        });
-      })
+    return httpRequest('api/log-by-date')
       .then(function (response) {
         if (response.success) {
           var content = sortedLogTemplate(response.content);
@@ -140,10 +112,6 @@
         } else {
           reportError(response.content);
         }
-      })
-      .catch(function (reason) {
-        console.error('request failed', reason);
-        reportError(reason);
       });
   };
 
@@ -154,11 +122,7 @@
       headers: { 'content-type': 'application/json' }
     };
 
-    return fetch('api/save', request)
-      .catch(function (reason) {
-        console.error('request failed', reason);
-        reportError(reason);
-      })
+    return httpRequest('api/save', request)
       .then(function (result) {
         return fetchTags();
       })
