@@ -1,4 +1,9 @@
 (function () {
+  var Tab = 9;
+  var Enter = 13;
+  var Esc = 27;
+  var Space = 32;
+
   Handlebars.registerHelper('md', function (data) {
     return new Handlebars.SafeString(marked.inlineLexer(data, [], {}));
   });
@@ -271,8 +276,7 @@
     });
 
     entryInput.addEventListener('keyup', function () {
-      /* Enter */
-      if (event.keyCode == 13 && entryInput.value) {
+      if (event.keyCode == Enter && entryInput.value) {
         hideEntrySuggestions();
         saveEvent(entryInput.value).then(function () {
           scrollToBottom();
@@ -330,14 +334,12 @@
     });
 
     document.addEventListener('keydown', function (event) {
-      /* ESC */
-      if (event.keyCode == 27) {
+      if (event.keyCode == Esc) {
         if (document.activeElement === entryInput && entryInput.value !== '') {
           clearEntry();
         }
 
-      /* Tab */
-      } else if (event.keyCode == 9) {
+      } else if (event.keyCode == Tab) {
         if (document.activeElement == entryInput) {
           if (suggestedEntryTags.length == 1) {
             var tag = '#' + suggestedEntryTags[0];
@@ -353,12 +355,11 @@
           }
         }
 
-      /* Space */
-      } else if (event.keyCode == 32) {
+      } else if (event.keyCode == Space) {
         if (document.activeElement == entryInput) {
           if (suggestedEntryTagsFocus >= 0) {
             var tag = '#' + suggestedEntryTags[suggestedEntryTagsFocus];
-            entryInput.value = entryInput.value.replace(tagRegex, tag + ' ');
+            entryInput.value = entryInput.value.replace(tagRegex, tag);
             hideEntrySuggestions();
           }
         }
@@ -485,8 +486,7 @@
     filterInput.addEventListener('input', suggestFilterInput);
 
     document.addEventListener('keydown', function (event) {
-      /* ESC */
-      if (event.keyCode == 27) {
+      if (event.keyCode == Esc) {
         if (document.activeElement === filterInput) {
           if (filterInput.value === '') {
             hideTagSuggestions();
@@ -499,8 +499,7 @@
           clearFilter();
         }
 
-      /* Tab */
-      } else if (event.keyCode == 9) {
+      } else if (event.keyCode == Tab) {
         if (document.activeElement === filterInput) {
           if (suggestedFilterTags.length == 1) {
             var tag = suggestedFilterTags[0];
@@ -517,8 +516,7 @@
           }
         }
 
-      /* Space */
-      } else if (event.keyCode == 32) {
+      } else if (event.keyCode == Space) {
         if (document.activeElement === filterInput) {
           if (suggestedFilterTagsFocus >= 0) {
             var tag = suggestedFilterTags[suggestedFilterTagsFocus];
@@ -552,18 +550,12 @@
 
   document.onkeydown = function (event) {
     switch (event.keyCode) {
-      /* Tab */
-      case 9:
+      case Tab:
         return false;
         break;
 
-      /* ESC */
-      case 27:
+      case Esc:
         return false;
-        break;
-
-      /* Space */
-      case 32:
         break;
     };
   };
