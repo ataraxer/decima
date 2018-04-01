@@ -1,0 +1,88 @@
+.rich-input {
+  position: relative;
+}
+
+input[type="text"] {
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: .5em .6em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  vertical-align: middle;
+  line-height: normal;
+
+  box-shadow: none !important;
+  outline: none;
+  -webkit-appearance: none;
+
+  margin: 0 !important;
+}
+
+input[type="text"]:focus {
+  border-color: #46b980 !important;
+}
+
+.input-button {
+  top: 0;
+  cursor: pointer;
+  display: block;
+  position: absolute;
+  right: 0;
+  padding: 0.66em;
+  color: #aaa;
+}
+
+.input-button-left {
+  top: 0;
+  cursor: pointer;
+  display: block;
+  position: absolute;
+  left: 0;
+  padding: 0.66em;
+  color: #aaa;
+}
+
+.input-button-padding-left {
+  padding-left: 2.1em !important;
+}
+
+.input-button-padding {
+  padding-right: 2.1em !important;
+}
+
+.shadow-suggest {
+  display: inline-block;
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: .5em .6em;
+  z-index: 1;
+  opacity: 0.5;
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
+
+.entry-shadow-suggest {
+  padding-left: 2.1em;
+  border: 1px solid rgba(0, 0, 0, 0);
+}
+
+.filter-shadow-suggest {
+}
+
+.filter-suggestions {
+  padding: 0;
+  padding-top: .5em;
+}
+
+.entry-suggestions {
+  padding: 0;
+  padding-bottom: .4em;
+}
+

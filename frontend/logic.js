@@ -30,15 +30,6 @@
     window.scrollTo(0, document.body.scrollHeight);
   };
 
-  var processForm = function (callback) {
-    return function (event) {
-      if (event.preventDefault) event.preventDefault();
-      callback(event.target);
-      // prevent default form handler from running
-      return false;
-    }
-  };
-
   var loadTemplate = function (id) {
     return Handlebars.compile(select(id).innerHTML);
   };
@@ -150,10 +141,11 @@
   };
 
   var entryComponent = (function () {
-    var entryForm = select('entry-form');
     var entryInput = select('entry-input');
     var entrySuggest = select('shadow-suggest');
+
     var entryTagSuggestions = select('entry-tag-suggestions');
+
     var entryButtonAdd = select('add-entry');
     var entryButtonDone = select('entry-done');
     var entryButtonHashtag = select('insert-hashtag');
@@ -210,7 +202,7 @@
       }
     };
 
-    entryInput.addEventListener('input', processForm(function (target) {
+    entryInput.addEventListener('input', function (target) {
       var lastTag = tagRegex.exec(entryInput.value);
 
       if (lastTag) {
@@ -227,17 +219,18 @@
         suggestedEntryTags = [];
         hideEntrySuggestions();
       }
-    }));
+    });
 
-    entryForm.addEventListener('submit', processForm(function (target) {
-      if (entryInput.value) {
+    entryInput.addEventListener('keyup', function () {
+      /* Enter */
+      if (event.keyCode == 13 && entryInput.value) {
         hideEntrySuggestions();
         saveEvent(entryInput.value).then(function () {
           scrollToBottom();
           clearEntry();
         });
       }
-    }));
+    });
 
     entryButtonAdd.addEventListener('click', function (event) {
       entryInput.focus();
@@ -361,13 +354,13 @@
       fetchSortedLog();
     };
 
-    var processFilterInput = processForm(function (target) {
-      if (target.value) {
-        fetchLog(target.value);
+    var processFilterInput = function (event) {
+      if (event.target.value) {
+        fetchLog(event.target.value);
       } else {
         fetchSortedLog();
       }
-    });
+    };
 
     var updateFilterShadowSuggest = function () {
       if (suggestedFilterTags.length > 0) {
@@ -396,17 +389,18 @@
       }
     };
 
-    var suggestFilterInput = processForm(function (target) {
-      if (target.value) {
+    var suggestFilterInput = function (event) {
+      var value = event.target.value;
+      if (value) {
         suggestedFilterTagsFocus = -1;
 
         suggestedFilterTags = tags.filter(function (tag) {
-          return tag.startsWith(target.value);
+          return tag.startsWith(value);
         });
 
         updateFilterShadowSuggest();
 
-        if (suggestedFilterTags.length === 1 && suggestedFilterTags[0] === target.value) {
+        if (suggestedFilterTags.length === 1 && suggestedFilterTags[0] === value) {
           hideTagSuggestions();
         } else {
           suggestFilterTags(suggestedFilterTags);
@@ -416,7 +410,7 @@
         suggestFilterTags(tags);
         filterSuggest.innerHTML = '';
       }
-    })
+    };
 
     filterButtonClear.addEventListener('click', clearFilter);
 

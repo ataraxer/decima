@@ -14,16 +14,6 @@ body {
   line-height: 1.6em;
 }
 
-form {
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-form fieldset {
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
 .wrapper {
   width: 100%;
 }
@@ -46,10 +36,6 @@ form fieldset {
 
 h1, h2 {
   font-weight: 300;
-}
-
-.full-width {
-  width:100%;
 }
 
 .capitalized {
@@ -97,16 +83,6 @@ code {
   padding: 1px 5px;
 }
 
-.filter-suggestions {
-  padding: 0;
-  padding-top: .5em;
-}
-
-.entry-suggestions {
-  padding: 0;
-  padding-bottom: .4em;
-}
-
 .inverted code {
   background-color: #fff;
   color: #46b980;
@@ -119,18 +95,6 @@ code {
 hr {
   border-width: 0;
   border-bottom: 1px solid #e5e5e5;
-}
-
-input[type="text"] {
-  width: 100%;
-  box-shadow: none !important;
-  -webkit-appearance: none;
-}
-
-input[type="search"] {
-  width: 100%;
-  box-shadow: none !important;
-  -webkit-appearance: none;
 }
 
 .fa-star {
@@ -187,16 +151,8 @@ header input {
   border: none !important;
 }
 
-input {
-  margin: 0 !important;
-}
-
 .faded {
   opacity: 0.7;
-}
-
-input:focus {
-  border-color: #46b980 !important;
 }
 
 .main {
@@ -294,62 +250,5 @@ a:hover {
 
 .float-left {
   float: left;
-}
-
-.rich-input {
-  position: relative;
-}
-
-.input-button-padding {
-  padding-right: 2.1em !important;
-}
-
-.input-button {
-  top: 0;
-  cursor: pointer;
-  display: block;
-  position: absolute;
-  right: 0;
-  padding: 0.66em;
-  color: #aaa;
-}
-
-.input-button-padding-left {
-  padding-left: 2.1em !important;
-}
-
-.input-button-left {
-  top: 0;
-  cursor: pointer;
-  display: block;
-  position: absolute;
-  left: 0;
-  padding: 0.66em;
-  color: #aaa;
-}
-
-.shadow-suggest {
-  display: inline-block;
-  position: absolute;
-  left: 0;
-  top: 0;
-  padding: .5em .6em;
-  z-index: 1;
-  opacity: 0.5;
-  -webkit-touch-callout: none; /* iOS Safari */
-    -webkit-user-select: none; /* Safari */
-     -khtml-user-select: none; /* Konqueror HTML */
-       -moz-user-select: none; /* Firefox */
-        -ms-user-select: none; /* Internet Explorer/Edge */
-            user-select: none; /* Non-prefixed version, currently
-                                  supported by Chrome and Opera */
-}
-
-.entry-shadow-suggest {
-  padding-left: 2.1em;
-  border: 1px solid rgba(0, 0, 0, 0);
-}
-
-.filter-shadow-suggest {
 }
 

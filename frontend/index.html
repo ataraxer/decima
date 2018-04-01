@@ -8,10 +8,11 @@
 
   <!-- Styles -->
   <link rel="stylesheet" href="main.css" />
+  <link rel="stylesheet" href="input.css" />
+
   <link rel="stylesheet" href="bower_components/pure/pure-min.css" />
   <link rel="stylesheet" href="bower_components/pure/grids-responsive-min.css">
   <link rel="stylesheet" href="bower_components/pure/tables-min.css">
-  <link rel="stylesheet" href="bower_components/pure/forms-min.css">
   <link rel="stylesheet" href="bower_components/animate.css/animate.min.css">
 
   <script src="bower_components/handlebars/handlebars.min.js"></script>
@@ -32,17 +33,22 @@
 
   <header class="wrapper">
     <div class="content">
-      <form class="pure-form">
-        <fieldset>
-          <div class="rich-input">
-            <input id="filter-input" type="text" name="filter" placeholder="Filter by tag..." autocapitalize="off" autocomplete="off" class="float-left input-button-padding">
-            <span id="clear-filter-input" class="input-button hidden">
-              <i class="fa fa-times"></i>
-            </span>
-            <span id="filter-shadow-suggest" class="shadow-suggest filter-shadow-suggest"></span>
-          </div>
-        </fieldset>
-      </form>
+      <div class="rich-input">
+        <input
+          id="filter-input"
+          type="text"
+          name="filter"
+          placeholder="Filter by tag..."
+          autocapitalize="off"
+          autocomplete="off"
+          class="input-button-padding"
+        />
+        <span id="filter-shadow-suggest" class="shadow-suggest filter-shadow-suggest"></span>
+        <!-- Buttons -->
+        <span id="clear-filter-input" class="input-button hidden">
+          <i class="fa fa-times"></i>
+        </span>
+      </div>
     </div>
 
     <div class="content inverted">
@@ -63,20 +69,24 @@
   <footer class="wrapper">
     <div class="wide-content">
       <div id="entry-tag-suggestions" class="tag-suggestions entry-suggestions hidden"></div>
-      <form id="entry-form" class="pure-form" action="#">
-        <fieldset>
-          <div class="rich-input">
-            <span id="insert-hashtag" class="input-button-left">
-              <i class="fa fa-hashtag"></i>
-            </span>
-            <input id="entry-input" type="text" placeholder="New entry..." autocapitalize="off" autocomplete="off" class="input-button-padding input-button-padding-left">
-            <span id="shadow-suggest" class="shadow-suggest entry-shadow-suggest"></span>
-            <span id="entry-done" class="input-button hidden">
-              <i class="fas fa-check"></i>
-            </span>
-          </div>
-        </fieldset>
-      </form>
+      <div class="rich-input">
+        <input
+          id="entry-input"
+          type="text"
+          placeholder="New entry..."
+          autocapitalize="off"
+          autocomplete="off"
+          class="input-button-padding input-button-padding-left"
+        />
+        <span id="shadow-suggest" class="shadow-suggest entry-shadow-suggest"></span>
+        <!-- Buttons -->
+        <span id="insert-hashtag" class="input-button-left">
+          <i class="fa fa-hashtag"></i>
+        </span>
+        <span id="entry-done" class="input-button hidden">
+          <i class="fas fa-check"></i>
+        </span>
+      </div>
     </div>
   </footer>
 
