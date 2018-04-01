@@ -252,3 +252,31 @@ a:hover {
   float: left;
 }
 
+.todo {
+  cursor: pointer;
+}
+
+.todo.fa-check-circle, .todo.fa-check-square {
+  color: #46b980;
+}
+
+.todo-button {
+  width: auto;
+  cursor: pointer;
+  top: .1em;
+  left: -1.5em;
+  padding: .15em;
+}
+
+.fa-right-angle,
+.fa-circe, .fa-check-circle,
+.fa-square, .fa-check-square {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
+

@@ -1,6 +1,22 @@
 (function () {
-  Handlebars.registerHelper('md', function(data) {
+  Handlebars.registerHelper('md', function (data) {
     return new Handlebars.SafeString(marked.inlineLexer(data, [], {}));
+  });
+
+  Handlebars.registerHelper('set-todo', function (tags) {
+    if (tags.indexOf('todo') > -1) {
+      return 'todo-button';
+    } else {
+      return '';
+    }
+  });
+
+  Handlebars.registerHelper('bullet', function (tags) {
+    if (tags.indexOf('todo') > -1) {
+      return 'far fa-circle todo';
+    } else {
+      return 'fa fa-angle-right';
+    }
   });
 
   var debounce = function (func, wait, immediate) {
@@ -82,12 +98,44 @@
       });
   };
 
+  var findParentWithClass = function (element, className) {
+    var result = element;
+
+    while (!result.classList.contains(className)) {
+      result = result.parentElement;
+    }
+
+    return result;
+  };
+
+  var handleTodoClick = function (event) {
+    var origin = findParentWithClass(event.target, 'todo-button');
+    var todoElement = origin.getElementsByClassName('todo')[0];
+    var classList = todoElement.classList;
+
+    if (classList.contains('fa-circle')) {
+      classList.add('fas', 'fa-check-circle');
+      classList.remove('far', 'fa-circle');
+    } else {
+      classList.remove('fas', 'fa-check-circle');
+      classList.add('far', 'fa-circle');
+    }
+  };
+
+  var setupTodoHandlers = function () {
+    var todos = document.getElementsByClassName('todo-button');
+    for (var index = 0; index < todos.length; index++) {
+      todos[index].addEventListener('click', handleTodoClick);
+    };
+  };
+
   var fetchLog = function (filter) {
     return httpRequest('api/log?filter=' + filter)
       .then(function (response) {
         if (response.success) {
           var content = logTemplate(response.content);
           log.innerHTML = content;
+          setupTodoHandlers();
         } else {
           reportError(response.content);
         }
@@ -100,6 +148,7 @@
         if (response.success) {
           var content = sortedLogTemplate(response.content);
           log.innerHTML = content;
+          setupTodoHandlers();
         } else {
           reportError(response.content);
         }
