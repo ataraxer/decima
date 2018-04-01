@@ -22,20 +22,34 @@ object Main extends App with FailFastCirceSupport with Directives {
   implicit val materializer = ActorMaterializer()
   import system.dispatcher
 
-  val storage = new FileStorage("first.json")
+  val storage = new FileStorage("second.json")
   val journal = new Journal(storage)
 
   val route = {
     pathPrefix("api") {
       path("tags") {
-        complete(journal.log.flatMap( _.tags ).distinct.sorted)
+        complete {
+          journal.log
+            .view
+            .map( _.content )
+            .collect { case text: Text => text.tags }
+            .flatten
+            .toSeq
+            .distinct
+            .sorted
+        }
       } ~
       path("log") {
         parameter('filter) { filter =>
           complete {
             journal.log
-              .filter( _.tags.contains(filter) )
-              .sortBy( event => Journal.stripTags(event.text) )
+              .filter { event =>
+                event.content match {
+                  case text: Text => text.tags.contains(filter)
+                  case _ => false
+                }
+              }
+              .sortBy( event => event.text.map(Journal.stripTags) )
           }
         } ~
         complete(journal.log)
@@ -54,7 +68,7 @@ object Main extends App with FailFastCirceSupport with Directives {
                 "events" -> events.asJson
               )
             }
-      }
+        }
       } ~
       path("save") {
         post {

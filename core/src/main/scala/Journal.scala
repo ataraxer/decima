@@ -29,10 +29,18 @@ final class Journal[F[_]: Applicative : FlatMap](storage: Storage[F]) {
   def log: Seq[Event] = _log
 
   def save(content: String): F[Unit] = {
+    save {
+      Text(
+        tags = extractTags(content),
+        content = TagRegex.replaceAllIn(content.trim, m => f"`$m`")
+      )
+    }
+  }
+
+  def save(content: EventContent): F[Unit] = {
     val event = Event(
       creationTime = System.currentTimeMillis,
-      tags = extractTags(content),
-      content = Text(TagRegex.replaceAllIn(content.trim, m => f"`$m`"))
+      content = content,
     )
 
     storage.save(event) >> (_log :+= event).pure[F]

@@ -95,8 +95,8 @@
     <ul class="fa-ul">
     {{#each this}}
       <li>
-        <span class="fa-li {{set-todo tags}}" data-badge="3">
-          <i class="{{bullet tags}}"></i>
+        <span class="fa-li {{set-todo content.Text.tags}}" data-badge="3">
+          <i class="{{bullet content.Text.tags}}"></i>
         </span>
         {{md content.Text.content}}
       </li>
@@ -110,8 +110,8 @@
       <ul class="fa-ul">
       {{#each events}}
         <li>
-          <span class="fa-li {{set-todo tags}}" data-badge="3">
-            <i class="{{bullet tags}}"></i>
+          <span class="fa-li {{set-todo content.Text.tags}}" data-badge="3">
+            <i class="{{bullet content.Text.tags}}"></i>
           </span>
           {{md content.Text.content}}
         </li>
