@@ -8,17 +8,21 @@
     return new Handlebars.SafeString(marked.inlineLexer(data, [], {}));
   });
 
-  Handlebars.registerHelper('set-todo', function (tags) {
-    if (tags.indexOf('todo') > -1) {
+  Handlebars.registerHelper('set-todo', function (event) {
+    if (event.content.Text.tags.indexOf('todo') > -1) {
       return 'todo-button';
     } else {
       return '';
     }
   });
 
-  Handlebars.registerHelper('bullet', function (tags) {
-    if (tags.indexOf('todo') > -1) {
-      return 'far fa-circle todo';
+  Handlebars.registerHelper('bullet', function (event) {
+    if (event.content.Text.tags.indexOf('todo') > -1) {
+      if (event.completed) {
+        return 'fas fa-check-circle todo';
+      } else {
+        return 'far fa-circle todo';
+      }
     } else {
       return 'fa fa-angle-right';
     }
@@ -92,6 +96,10 @@
     });
   };
 
+  var toggleTodo = function (id, done) {
+    return httpRequest('api/toggle-todo?id=' + id + '&done=' + done);
+  };
+
   var fetchTags = function () {
     return httpRequest('api/tags')
       .then(function (response) {
@@ -117,13 +125,20 @@
     var origin = findParentWithClass(event.target, 'todo-button');
     var todoElement = origin.getElementsByClassName('todo')[0];
     var classList = todoElement.classList;
+    var id = origin.dataset.id;
 
     if (classList.contains('fa-circle')) {
-      classList.add('fas', 'fa-check-circle');
-      classList.remove('far', 'fa-circle');
-    } else {
-      classList.remove('fas', 'fa-check-circle');
-      classList.add('far', 'fa-circle');
+      toggleTodo(id, true).then(function () {
+        classList.add('fas', 'fa-check-circle');
+        classList.remove('far', 'fa-circle');
+        origin.classList.add('fadeIn');
+      });
+    } else if (confirm('Are you sure you want to uncheck TODO?')) {
+      toggleTodo(id, false).then(function () {
+        classList.remove('fas', 'fa-check-circle');
+        classList.add('far', 'fa-circle');
+        origin.classList.remove('fadeIn');
+      });
     }
   };
 

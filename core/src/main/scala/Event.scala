@@ -2,6 +2,7 @@ package decima
 
 
 final case class Event(
+  id: Option[Long],
   creationTime: Long,
   content: EventContent,
 ) {

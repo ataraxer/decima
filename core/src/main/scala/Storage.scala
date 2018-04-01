@@ -34,9 +34,13 @@ final class FileStorage(path: String) extends Storage[Id] {
   }
 
   def load(): Seq[Event] = {
-    reader.lines().iterator.asScala.toSeq.map { line =>
-      parse(line).flatMap( _.as[Event] ).fold(throw _, identity)
-    }
+    reader.lines().iterator.asScala.toSeq
+      .zipWithIndex.map { case (line, index) =>
+        parse(line)
+          .flatMap( _.as[Event] )
+          .fold(throw _, identity)
+          .copy(id = Some(index.toLong))
+      }
   }
 
   def save(event: Event): Unit = {

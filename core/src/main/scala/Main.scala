@@ -25,6 +25,23 @@ object Main extends App with FailFastCirceSupport with Directives {
   val storage = new FileStorage("second.json")
   val journal = new Journal(storage)
 
+  def badRequest(message: String): Nothing = {
+    throw new IllegalArgumentException(message)
+  }
+
+  def serializeEvents(events: Seq[Event]): Seq[Json] = {
+    events.flatMap { event =>
+      event.content match {
+        case _: ToggleTodo =>
+          None
+        case _ if journal.toggledTodos.contains(event.id getOrElse 0L) =>
+          Some(event.asJson.mapObject(_.add("completed", true.asJson)))
+        case _ =>
+          Some(event.asJson)
+      }
+    }
+  }
+
   val route = {
     pathPrefix("api") {
       path("tags") {
@@ -38,21 +55,28 @@ object Main extends App with FailFastCirceSupport with Directives {
             .distinct
             .sorted
         }
+
       } ~
       path("log") {
         parameter('filter) { filter =>
           complete {
-            journal.log
-              .filter { event =>
-                event.content match {
-                  case text: Text => text.tags.contains(filter)
-                  case _ => false
+            serializeEvents {
+              journal.log
+                .filter { event =>
+                  event.content match {
+                    case text: Text => text.tags.contains(filter)
+                    case _ => false
+                  }
                 }
-              }
-              .sortBy( event => event.text.map(Journal.stripTags) )
+                .sortBy( event => event.text.map(Journal.stripTags) )
+            }
           }
+
         } ~
-        complete(journal.log)
+        complete {
+          serializeEvents(journal.log)
+        }
+
       } ~
       path("log-by-date") {
         complete {
@@ -65,10 +89,11 @@ object Main extends App with FailFastCirceSupport with Directives {
             .map { case (key, events) =>
               Json.obj(
                 "date" -> key.toString.asJson,
-                "events" -> events.asJson
+                "events" -> serializeEvents(events).asJson
               )
             }
         }
+
       } ~
       path("save") {
         post {
@@ -78,7 +103,29 @@ object Main extends App with FailFastCirceSupport with Directives {
             }
           }
         }
+
+      } ~
+      path("toggle-todo") {
+        get {
+          parameters(('id.as[Long], 'done.as[Boolean])) { (id, done) =>
+            complete {
+              journal.log.lift(id.toInt) match {
+                case Some(event) =>
+                  event.content match {
+                    case text: Text if text.tags.contains("todo") =>
+                      journal.save(ToggleTodo(id, done))
+                    case _ =>
+                      badRequest(f"Event `$event` is not a todo")
+                  }
+
+                case None =>
+                  badRequest(f"No event with id: $id")
+              }
+            }
+          }
+        }
       }
+
     } ~
     pathSingleSlash { getFromFile("../frontend/index.html") } ~
     getFromDirectory("../frontend")

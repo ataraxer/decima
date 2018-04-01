@@ -266,6 +266,8 @@ a:hover {
   top: .1em;
   left: -1.5em;
   padding: .15em;
+  animation-duration: 0.5s;
+  -webkit-animation-duration: 0.5s;
 }
 
 .fa-right-angle,
