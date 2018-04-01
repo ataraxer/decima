@@ -132,14 +132,20 @@
       });
   };
 
+  var fixWhitespace = function (input) {
+    return input.replace(/ /g, '&nbsp;');
+  };
+
   var updateShadowSuggest = function (suggestElement, originalText, suggestedText) {
+    var cutoff = originalText.length;
+
     var invisiblePart = new Handlebars.SafeString(
       "<span class='invisible'>" +
-      suggestedText.substring(0, originalText.length) +
+      fixWhitespace(suggestedText.substring(0, cutoff)) +
       "</span>"
     );
 
-    var visiblePart = suggestedText.substring(originalText.length);
+    var visiblePart = fixWhitespace(suggestedText.substring(cutoff));
     suggestElement.innerHTML = invisiblePart + visiblePart;
   };
 
