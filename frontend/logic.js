@@ -499,7 +499,7 @@
   })();
 
   fetchTags();
-  fetchSortedLog();
+  fetchSortedLog().then(function () { scrollToBottom(); });
 
   document.onkeydown = function (event) {
     switch (event.keyCode) {
