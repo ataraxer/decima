@@ -290,7 +290,7 @@
       }
     });
 
-    entryInput.addEventListener('keyup', function () {
+    entryInput.addEventListener('keyup', function (event) {
       if (event.keyCode == Enter && entryInput.value) {
         hideEntrySuggestions();
         saveEvent(entryInput.value).then(function () {
