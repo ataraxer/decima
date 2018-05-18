@@ -68,7 +68,7 @@
   var log = select('log');
   var errorCard = select('error-card');
 
-  var tagRegex = /#[\w\d-_]+$/;
+  var TAG_REGEX = /#[\w\d-_]+$/;
 
   var tags = [];
 
@@ -219,9 +219,6 @@
     var entryButtonDone = select('entry-done');
     var entryButtonHashtag = select('insert-hashtag');
 
-    var suggestedEntryTags = [];
-    var suggestedEntryTagsFocus = -1;
-
     if (
       window.matchMedia &&
       window.matchMedia("(min-device-width: 768px)").matches
@@ -229,70 +226,74 @@
       entryInput.focus();
     }
 
-    var showEntrySuggestions = function () {
-      show(entryTagSuggestions)
-    };
+    var entryState = {};
 
     var hideEntrySuggestions = function () {
-      hide(entryTagSuggestions)
-      entrySuggest.innerHTML = '';
-      main.classList.remove('faded');
+      entryState.tags = [];
+      entryState.focus = -1;
     };
 
-    var suggestEntryTags = function (tags) {
-      if (tags.length > 0) {
-        showEntrySuggestions();
-        var content = tagsTemplate(tags);
+    var renderSuggest = function (suggestedTags, focus, currentText) {
+      if (suggestedTags.length > 0) {
+        show(entryTagSuggestions);
+        var content = tagsTemplate(suggestedTags);
         entryTagSuggestions.innerHTML = content;
-      } else {
-        hideEntrySuggestions();
-      }
-    };
 
-    var clearEntry = function () {
-      entryInput.value = '';
-      hideEntrySuggestions();
-      hideEntryDoneButton();
-    };
-
-    var updateEntryShadowSuggest = function () {
-      if (suggestedEntryTags.length > 0) {
-        var focus = (suggestedEntryTags.length == 1) ? 0 : suggestedEntryTagsFocus;
+        if (suggestedTags.length == 1) {
+          focus = 0;
+        }
 
         if (focus >= 0) {
-          var tag = '#' + suggestedEntryTags[focus];
-          var currentText = entryInput.value;
-          var suggestedText = currentText.replace(tagRegex, tag);
+          var tag = '#' + suggestedTags[focus];
+          var suggestedText = currentText.replace(TAG_REGEX, tag);
           updateShadowSuggest(entrySuggest, currentText, suggestedText);
         } else {
           entrySuggest.innerHTML = '';
         }
+
         main.classList.add('faded');
+      } else {
+        hide(entryTagSuggestions);
+        entrySuggest.innerHTML = '';
+        main.classList.remove('faded');
       }
     };
 
-    entryInput.addEventListener('input', function (target) {
-      var lastTag = tagRegex.exec(entryInput.value);
+    var prepareSuggestions = function (tags, text) {
+      var result = { focus: -1 };
+      var lastTag = TAG_REGEX.exec(text);
 
       if (lastTag) {
         var incompleteTag = lastTag[0].replace('#', '');
-        suggestedEntryTagsFocus = -1;
 
-        suggestedEntryTags = tags.filter(function (tag) {
+        result.tags = tags.filter(function (tag) {
           return tag.startsWith(incompleteTag);
         });
-
-        suggestEntryTags(suggestedEntryTags);
-        updateEntryShadowSuggest();
       } else {
-        suggestedEntryTags = [];
-        hideEntrySuggestions();
+        result.tags = [];
       }
+
+      return result;
+    };
+
+    var clearEntry = function () {
+      entryInput.value = '';
+      hideEntryDoneButton();
+      hideEntrySuggestions();
+      renderSuggest(entryState.tags, entryState.focus, entryInput.value);
+    };
+
+    var merge = function (a, b) { return Object.assign({}, a, b); };
+
+    entryInput.addEventListener('input', function () {
+      entryState = merge(entryState, prepareSuggestions(tags, entryInput.value));
+      renderSuggest(entryState.tags, entryState.focus, entryInput.value);
     });
 
     entryInput.addEventListener('keyup', function (event) {
       if (event.keyCode == Enter && entryInput.value) {
         hideEntrySuggestions();
+        renderSuggest(entryState.tags, entryState.focus, entryInput.value);
         saveEvent(entryInput.value).then(function () {
           scrollToBottom();
           clearEntry();
@@ -341,8 +342,9 @@
       if (event.target.tagName == 'CODE') {
         if (event.target.parentElement.id === 'entry-tag-suggestions') {
           var tag = '#' + event.target.innerHTML;
-          entryInput.value = entryInput.value.replace(tagRegex, tag + ' ');
+          entryInput.value = entryInput.value.replace(TAG_REGEX, tag + ' ');
           hideEntrySuggestions();
+          renderSuggest(entryState.tags, entryState.focus, entryInput.value);
           entryInput.focus();
         }
       }
@@ -356,26 +358,28 @@
 
       } else if (event.keyCode == Tab) {
         if (document.activeElement == entryInput) {
-          if (suggestedEntryTags.length == 1) {
-            var tag = '#' + suggestedEntryTags[0];
-            entryInput.value = entryInput.value.replace(tagRegex, tag + ' ');
+          if (entryState.tags.length == 1) {
+            var tag = '#' + entryState.tags[0];
+            entryInput.value = entryInput.value.replace(TAG_REGEX, tag + ' ');
             hideEntrySuggestions();
           } else {
-            suggestedEntryTagsFocus += 1;
-            suggestedEntryTagsFocus %= (suggestedEntryTags.length + 1);
-            if (suggestedEntryTagsFocus === suggestedEntryTags.length) {
-              suggestedEntryTagsFocus = -1;
+            entryState.focus += 1;
+            entryState.focus %= (entryState.tags.length + 1);
+            if (entryState.focus === entryState.tags.length) {
+              entryState.focus = -1;
             }
-            updateEntryShadowSuggest();
           }
+
+          renderSuggest(entryState.tags, entryState.focus, entryInput.value);
         }
 
       } else if (event.keyCode == Space) {
         if (document.activeElement == entryInput) {
-          if (suggestedEntryTagsFocus >= 0) {
-            var tag = '#' + suggestedEntryTags[suggestedEntryTagsFocus];
-            entryInput.value = entryInput.value.replace(tagRegex, tag);
+          if (entryState.focus >= 0) {
+            var tag = '#' + entryState.tags[entryState.focus];
+            entryInput.value = entryInput.value.replace(TAG_REGEX, tag);
             hideEntrySuggestions();
+            renderSuggest(entryState.tags, entryState.focus, entryInput.value);
           }
         }
       }
