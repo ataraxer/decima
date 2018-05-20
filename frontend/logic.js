@@ -439,9 +439,6 @@
     var filterShadowTagSuggestions = select('shadow-tag-suggestions');
     var filterButtonClear = select('clear-filter-input');
 
-    var suggestedFilterTags = [];
-    var suggestedFilterTagsFocus = -1;
-
     var hideTagSuggestions = function () {
       hide(filterTagSuggestions);
       hide(filterShadowTagSuggestions);
@@ -456,13 +453,14 @@
     var hideClearFilterInput = function () { hide(filterButtonClear) };
 
     var clearFilter = function () {
+      suggest.hide();
       filterInput.value = '';
-      filterSuggest.innerHTML = '';
       if (document.activeElement === filterInput) {
-        suggestFilterTags(tags);
+        suggest.override(tags);
       } else {
         hideClearFilterInput();
       }
+      suggest.render();
       fetchSortedLog();
     };
 
@@ -474,55 +472,31 @@
       }
     };
 
-    var updateFilterShadowSuggest = function () {
-      if (suggestedFilterTags.length > 0) {
-        var focus = (suggestedFilterTags.length == 1) ? 0 : suggestedFilterTagsFocus;
+    var suggest = Suggest({
+      detectSuggestable: function (text) { return text },
 
-        if (focus >= 0) {
-          var currentText = filterInput.value;
-          var suggestedText = suggestedFilterTags[focus];
-          updateShadowSuggest(filterSuggest, currentText, suggestedText);
+      render: function (suggest) {
+        var suggestedTags = suggest.tags();
+        if (suggestedTags.length > 0) {
+          var content = tagsTemplate(suggestedTags);
+          filterTagSuggestions.innerHTML = content;
+          filterShadowTagSuggestions.innerHTML = content;
+          showTagSuggestions();
+
+          var tag = suggest.result();
+
+          if (tag) {
+            var currentText = filterInput.value;
+            updateShadowSuggest(filterSuggest, currentText, tag);
+          } else {
+            filterSuggest.innerHTML = '';
+          }
         } else {
+          hideTagSuggestions();
           filterSuggest.innerHTML = '';
         }
-      } else {
-        filterSuggest.innerHTML = '';
       }
-    };
-
-    var suggestFilterTags = function (tags) {
-      if (tags.length > 0) {
-        showTagSuggestions();
-        var content = tagsTemplate(tags);
-        filterTagSuggestions.innerHTML = content;
-        filterShadowTagSuggestions.innerHTML = content;
-      } else {
-        hideTagSuggestions();
-      }
-    };
-
-    var suggestFilterInput = function (event) {
-      var value = event.target.value;
-      if (value) {
-        suggestedFilterTagsFocus = -1;
-
-        suggestedFilterTags = tags.filter(function (tag) {
-          return tag.startsWith(value);
-        });
-
-        updateFilterShadowSuggest();
-
-        if (suggestedFilterTags.length === 1 && suggestedFilterTags[0] === value) {
-          hideTagSuggestions();
-        } else {
-          suggestFilterTags(suggestedFilterTags);
-        }
-      } else {
-        suggestedFilterTags = [];
-        suggestFilterTags(tags);
-        filterSuggest.innerHTML = '';
-      }
-    };
+    });
 
     filterButtonClear.addEventListener('click', clearFilter);
 
@@ -533,7 +507,8 @@
       );
 
       showClearFilterInput();
-      suggestFilterTags(tags);
+      suggest.override(tags);
+      suggest.render();
       if (wasAtTheBottom) scrollToBottom();
     });
 
@@ -545,7 +520,16 @@
     });
 
     filterInput.addEventListener('input', debounce(processFilterInput, 250));
-    filterInput.addEventListener('input', suggestFilterInput);
+
+    filterInput.addEventListener('input', function () {
+      if (filterInput.value) {
+        suggest.update(filterInput.value);
+      } else {
+        suggest.override(tags);
+      }
+
+      suggest.render();
+    });
 
     document.addEventListener('keydown', function (event) {
       if (event.keyCode == Esc) {
@@ -563,27 +547,25 @@
 
       } else if (event.keyCode == Tab) {
         if (document.activeElement === filterInput) {
-          if (suggestedFilterTags.length == 1) {
-            var tag = suggestedFilterTags[0];
+          if (suggest.isSingle()) {
+            var tag = suggest.result();
+            suggest.hide();
             filterInput.value = tag;
-            hideTagSuggestions();
-            fetchLog(filterInput.value);
+            fetchLog(tag);
           } else {
-            suggestedFilterTagsFocus += 1;
-            suggestedFilterTagsFocus %= (suggestedFilterTags.length + 1);
-            if (suggestedFilterTagsFocus === suggestedFilterTags.length) {
-              suggestedFilterTagsFocus = -1;
-            }
-            updateFilterShadowSuggest();
+            suggest.next();
           }
+
+          suggest.render();
         }
 
       } else if (event.keyCode == Space) {
         if (document.activeElement === filterInput) {
-          if (suggestedFilterTagsFocus >= 0) {
-            var tag = suggestedFilterTags[suggestedFilterTagsFocus];
+          var tag = suggest.result();
+          if (tag) {
+            suggest.hide();
+            suggest.render();
             filterInput.value = tag;
-            hideTagSuggestions();
             fetchLog(filterInput.value);
           }
         }
