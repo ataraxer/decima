@@ -233,6 +233,23 @@
       entryState.focus = -1;
     };
 
+    var prepareSuggestions = function (tags, text) {
+      var result = { focus: -1 };
+      var lastTag = TAG_REGEX.exec(text);
+
+      if (lastTag) {
+        var incompleteTag = lastTag[0].replace('#', '');
+
+        result.tags = tags.filter(function (tag) {
+          return tag.startsWith(incompleteTag);
+        });
+      } else {
+        result.tags = [];
+      }
+
+      return result;
+    };
+
     var renderSuggest = function (suggestedTags, focus, currentText) {
       if (suggestedTags.length > 0) {
         show(entryTagSuggestions);
@@ -259,41 +276,51 @@
       }
     };
 
-    var prepareSuggestions = function (tags, text) {
-      var result = { focus: -1 };
-      var lastTag = TAG_REGEX.exec(text);
+    var merge = function (a, b) { return Object.assign({}, a, b); };
 
-      if (lastTag) {
-        var incompleteTag = lastTag[0].replace('#', '');
-
-        result.tags = tags.filter(function (tag) {
-          return tag.startsWith(incompleteTag);
-        });
-      } else {
-        result.tags = [];
-      }
-
-      return result;
+    var suggest = {
+      hide: hideEntrySuggestions,
+      update: function (text) {
+        entryState = merge(entryState, prepareSuggestions(tags, text));
+      },
+      isSingle: function () {
+        return entryState.tags.length == 1;
+      },
+      result: function () {
+        if (entryState.tags.length == 1) {
+          return '#' + entryState.tags[0];
+        } else if (entryState.focus >= 0) {
+          return '#' + entryState.tags[entryState.focus];
+        }
+      },
+      next: function() {
+        entryState.focus += 1;
+        entryState.focus %= (entryState.tags.length + 1);
+        if (entryState.focus === entryState.tags.length) {
+          entryState.focus = -1;
+        }
+      },
+      render: function () {
+        renderSuggest(entryState.tags, entryState.focus, entryInput.value)
+      },
     };
 
     var clearEntry = function () {
       entryInput.value = '';
       hideEntryDoneButton();
-      hideEntrySuggestions();
-      renderSuggest(entryState.tags, entryState.focus, entryInput.value);
+      suggest.hide();
+      suggest.render();
     };
 
-    var merge = function (a, b) { return Object.assign({}, a, b); };
-
     entryInput.addEventListener('input', function () {
-      entryState = merge(entryState, prepareSuggestions(tags, entryInput.value));
-      renderSuggest(entryState.tags, entryState.focus, entryInput.value);
+      suggest.update(entryInput.value);
+      suggest.render();
     });
 
     entryInput.addEventListener('keyup', function (event) {
       if (event.keyCode == Enter && entryInput.value) {
-        hideEntrySuggestions();
-        renderSuggest(entryState.tags, entryState.focus, entryInput.value);
+        suggest.hide();
+        suggest.render();
         saveEvent(entryInput.value).then(function () {
           scrollToBottom();
           clearEntry();
@@ -343,8 +370,8 @@
         if (event.target.parentElement.id === 'entry-tag-suggestions') {
           var tag = '#' + event.target.innerHTML;
           entryInput.value = entryInput.value.replace(TAG_REGEX, tag + ' ');
-          hideEntrySuggestions();
-          renderSuggest(entryState.tags, entryState.focus, entryInput.value);
+          suggest.hide();
+          suggest.render();
           entryInput.focus();
         }
       }
@@ -358,28 +385,25 @@
 
       } else if (event.keyCode == Tab) {
         if (document.activeElement == entryInput) {
-          if (entryState.tags.length == 1) {
-            var tag = '#' + entryState.tags[0];
+          if (suggest.isSingle()) {
+            var tag = suggest.result();
+            suggest.hide();
             entryInput.value = entryInput.value.replace(TAG_REGEX, tag + ' ');
-            hideEntrySuggestions();
           } else {
-            entryState.focus += 1;
-            entryState.focus %= (entryState.tags.length + 1);
-            if (entryState.focus === entryState.tags.length) {
-              entryState.focus = -1;
-            }
+            suggest.next();
           }
 
-          renderSuggest(entryState.tags, entryState.focus, entryInput.value);
+          suggest.render();
         }
 
       } else if (event.keyCode == Space) {
         if (document.activeElement == entryInput) {
-          if (entryState.focus >= 0) {
-            var tag = '#' + entryState.tags[entryState.focus];
+          var tag = suggest.result();
+          if (tag) {
+            suggest.hide();
+            suggest.render();
+            // FIXME: effect
             entryInput.value = entryInput.value.replace(TAG_REGEX, tag);
-            hideEntrySuggestions();
-            renderSuggest(entryState.tags, entryState.focus, entryInput.value);
           }
         }
       }
