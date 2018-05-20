@@ -209,6 +209,72 @@
     suggestElement.innerHTML = invisiblePart + visiblePart;
   };
 
+  var Suggest = function (behavior) {
+    var state = {
+      focus: -1,
+      tags: [],
+    };
+
+    return {
+      hide: function () {
+        state.focus = -1;
+        state.tags = [];
+      },
+
+      override: function (tags) {
+        state.focus = -1;
+        state.tags = tags;
+      },
+
+      update: function (text) {
+        state.focus = -1;
+        state.tags = [];
+
+        if (text) {
+          var incompleteTag = behavior.detectSuggestable(text);
+
+          if (incompleteTag) {
+            state.tags = tags.filter(function (tag) {
+              return tag.startsWith(incompleteTag);
+            });
+
+            if (state.tags.length === 1 && state.tags[0] === incompleteTag) {
+              state.tags = [];
+            }
+          }
+        }
+      },
+
+      isSingle: function () {
+        return state.tags.length == 1;
+      },
+
+      tags: function () {
+        return state.tags;
+      },
+
+      result: function () {
+        if (state.tags.length == 1) {
+          return state.tags[0];
+        } else if (state.focus >= 0) {
+          return state.tags[state.focus];
+        }
+      },
+
+      next: function() {
+        state.focus += 1;
+        state.focus %= (state.tags.length + 1);
+        if (state.focus === state.tags.length) {
+          state.focus = -1;
+        }
+      },
+
+      render: function () {
+        behavior.render(this)
+      },
+    };
+  };
+
   var entryComponent = (function () {
     var entryInput = select('entry-input');
     var entrySuggest = select('shadow-suggest');
@@ -226,84 +292,37 @@
       entryInput.focus();
     }
 
-    var entryState = {};
+    var suggest = Suggest({
+      detectSuggestable: function (text) {
+        var lastTag = TAG_REGEX.exec(text);
+        if (lastTag) return lastTag[0].replace('#', '');
+      },
 
-    var hideEntrySuggestions = function () {
-      entryState.tags = [];
-      entryState.focus = -1;
-    };
+      render: function (suggest) {
+        var suggestedTags = suggest.tags();
+        if (suggestedTags.length > 0) {
+          show(entryTagSuggestions);
+          var content = tagsTemplate(suggestedTags);
+          entryTagSuggestions.innerHTML = content;
 
-    var prepareSuggestions = function (tags, text) {
-      var result = { focus: -1 };
-      var lastTag = TAG_REGEX.exec(text);
+          var tag = suggest.result();
 
-      if (lastTag) {
-        var incompleteTag = lastTag[0].replace('#', '');
+          if (tag) {
+            var currentText = entryInput.value;
+            var suggestedText = currentText.replace(TAG_REGEX, '#' + tag);
+            updateShadowSuggest(entrySuggest, currentText, suggestedText);
+          } else {
+            entrySuggest.innerHTML = '';
+          }
 
-        result.tags = tags.filter(function (tag) {
-          return tag.startsWith(incompleteTag);
-        });
-      } else {
-        result.tags = [];
-      }
-
-      return result;
-    };
-
-    var renderSuggest = function (suggestedTags, focus, currentText) {
-      if (suggestedTags.length > 0) {
-        show(entryTagSuggestions);
-        var content = tagsTemplate(suggestedTags);
-        entryTagSuggestions.innerHTML = content;
-
-        if (suggestedTags.length == 1) {
-          focus = 0;
-        }
-
-        if (focus >= 0) {
-          var tag = '#' + suggestedTags[focus];
-          var suggestedText = currentText.replace(TAG_REGEX, tag);
-          updateShadowSuggest(entrySuggest, currentText, suggestedText);
+          main.classList.add('faded');
         } else {
+          hide(entryTagSuggestions);
           entrySuggest.innerHTML = '';
+          main.classList.remove('faded');
         }
-
-        main.classList.add('faded');
-      } else {
-        hide(entryTagSuggestions);
-        entrySuggest.innerHTML = '';
-        main.classList.remove('faded');
       }
-    };
-
-    var merge = function (a, b) { return Object.assign({}, a, b); };
-
-    var suggest = {
-      hide: hideEntrySuggestions,
-      update: function (text) {
-        entryState = merge(entryState, prepareSuggestions(tags, text));
-      },
-      isSingle: function () {
-        return entryState.tags.length == 1;
-      },
-      result: function () {
-        if (entryState.tags.length == 1) {
-          return '#' + entryState.tags[0];
-        } else if (entryState.focus >= 0) {
-          return '#' + entryState.tags[entryState.focus];
-        }
-      },
-      next: function() {
-        entryState.focus += 1;
-        entryState.focus %= (entryState.tags.length + 1);
-        if (entryState.focus === entryState.tags.length) {
-          entryState.focus = -1;
-        }
-      },
-      render: function () {
-        renderSuggest(entryState.tags, entryState.focus, entryInput.value)
-      },
-    };
+    });
 
     var clearEntry = function () {
       entryInput.value = '';
@@ -388,7 +407,7 @@
           if (suggest.isSingle()) {
             var tag = suggest.result();
             suggest.hide();
-            entryInput.value = entryInput.value.replace(TAG_REGEX, tag + ' ');
+            entryInput.value = entryInput.value.replace(TAG_REGEX, '#' + tag + ' ');
           } else {
             suggest.next();
           }
@@ -403,7 +422,7 @@
             suggest.hide();
             suggest.render();
             // FIXME: effect
-            entryInput.value = entryInput.value.replace(TAG_REGEX, tag);
+            entryInput.value = entryInput.value.replace(TAG_REGEX, '#' + tag);
           }
         }
       }
