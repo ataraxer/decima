@@ -196,23 +196,29 @@
     return input.replace(/ /g, '&nbsp;');
   };
 
-  var updateShadowSuggest = function (suggestElement, originalText, suggestedText) {
-    var cutoff = originalText.length;
+  var identity = function (x) { return x; };
+  var second = function (a, b) { return b; };
 
-    var invisiblePart = new Handlebars.SafeString(
-      "<span class='invisible'>" +
-      fixWhitespace(suggestedText.substring(0, cutoff)) +
-      "</span>"
-    );
+  var Suggest = function (args) {
+    args.detectSuggestable = args.detectSuggestable || identity;
+    args.encodeSuggested = args.encodeSuggested || second;
 
-    var visiblePart = fixWhitespace(suggestedText.substring(cutoff));
-    suggestElement.innerHTML = invisiblePart + visiblePart;
-  };
-
-  var Suggest = function (behavior) {
     var state = {
       focus: -1,
       tags: [],
+    };
+
+    var renderShadowSuggest = function (originalText, suggestedText) {
+      var cutoff = originalText.length;
+
+      var invisiblePart = new Handlebars.SafeString(
+        "<span class='invisible'>" +
+        fixWhitespace(suggestedText.substring(0, cutoff)) +
+        "</span>"
+      );
+
+      var visiblePart = fixWhitespace(suggestedText.substring(cutoff));
+      return invisiblePart + visiblePart;
     };
 
     return {
@@ -231,7 +237,7 @@
         state.tags = [];
 
         if (text) {
-          var incompleteTag = behavior.detectSuggestable(text);
+          var incompleteTag = args.detectSuggestable(text);
 
           if (incompleteTag) {
             state.tags = tags.filter(function (tag) {
@@ -247,10 +253,6 @@
 
       isSingle: function () {
         return state.tags.length == 1;
-      },
-
-      tags: function () {
-        return state.tags;
       },
 
       result: function () {
@@ -270,7 +272,22 @@
       },
 
       render: function () {
-        behavior.render(this)
+        if (state.tags.length > 0) {
+          args.show(tagsTemplate(state.tags));
+          var tag = this.result();
+
+          if (tag) {
+            var currentText = args.input.value;
+            var suggestedText = args.encodeSuggested(currentText, tag);
+            var content = renderShadowSuggest(currentText, suggestedText);
+            args.suggest.innerHTML = content;
+          } else {
+            args.suggest.innerHTML = '';
+          }
+        } else {
+          args.hide();
+          args.suggest.innerHTML = '';
+        }
       },
     };
   };
@@ -293,35 +310,29 @@
     }
 
     var suggest = Suggest({
+      input: entryInput,
+      suggest: entrySuggest,
+
       detectSuggestable: function (text) {
         var lastTag = TAG_REGEX.exec(text);
         if (lastTag) return lastTag[0].replace('#', '');
       },
 
-      render: function (suggest) {
-        var suggestedTags = suggest.tags();
-        if (suggestedTags.length > 0) {
-          show(entryTagSuggestions);
-          var content = tagsTemplate(suggestedTags);
-          entryTagSuggestions.innerHTML = content;
+      encodeSuggested: function (text, tag) {
+        return text.replace(TAG_REGEX, '#' + tag);
+      },
 
-          var tag = suggest.result();
+      show: function (content) {
+        entryTagSuggestions.innerHTML = content;
+        show(entryTagSuggestions);
+        main.classList.add('faded');
+      },
 
-          if (tag) {
-            var currentText = entryInput.value;
-            var suggestedText = currentText.replace(TAG_REGEX, '#' + tag);
-            updateShadowSuggest(entrySuggest, currentText, suggestedText);
-          } else {
-            entrySuggest.innerHTML = '';
-          }
-
-          main.classList.add('faded');
-        } else {
-          hide(entryTagSuggestions);
-          entrySuggest.innerHTML = '';
-          main.classList.remove('faded');
-        }
-      }
+      hide: function () {
+        entryTagSuggestions.innerHTML = '';
+        hide(entryTagSuggestions);
+        main.classList.remove('faded');
+      },
     });
 
     var clearEntry = function () {
@@ -471,29 +482,20 @@
     };
 
     var suggest = Suggest({
-      detectSuggestable: function (text) { return text },
+      input: filterInput,
+      suggest: filterSuggest,
 
-      render: function (suggest) {
-        var suggestedTags = suggest.tags();
-        if (suggestedTags.length > 0) {
-          var content = tagsTemplate(suggestedTags);
-          filterTagSuggestions.innerHTML = content;
-          filterShadowTagSuggestions.innerHTML = content;
-          showTagSuggestions();
+      show: function (content) {
+        filterTagSuggestions.innerHTML = content;
+        filterShadowTagSuggestions.innerHTML = content;
+        showTagSuggestions();
+      },
 
-          var tag = suggest.result();
-
-          if (tag) {
-            var currentText = filterInput.value;
-            updateShadowSuggest(filterSuggest, currentText, tag);
-          } else {
-            filterSuggest.innerHTML = '';
-          }
-        } else {
-          hideTagSuggestions();
-          filterSuggest.innerHTML = '';
-        }
-      }
+      hide: function () {
+        filterTagSuggestions.innerHTML = '';
+        filterShadowTagSuggestions.innerHTML = '';
+        hideTagSuggestions();
+      },
     });
 
     filterButtonClear.addEventListener('click', clearFilter);
