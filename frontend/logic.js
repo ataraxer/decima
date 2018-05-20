@@ -1,8 +1,8 @@
 (function () {
-  var Tab = 9;
+  var TAB = 9;
   var Enter = 13;
-  var Esc = 27;
-  var Space = 32;
+  var ESC = 27;
+  var SPACE = 32;
 
   Handlebars.registerHelper('md', function (data) {
     return new Handlebars.SafeString(marked.inlineLexer(data, [], {}));
@@ -397,39 +397,37 @@
     });
 
     document.addEventListener('keydown', function (event) {
-      if (event.keyCode == Esc) {
-        if (document.activeElement === entryInput && entryInput.value !== '') {
-          clearEntry();
-        }
+      if (document.activeElement === entryInput) {
+        switch (event.keyCode) {
+          case ESC:
+            if (entryInput.value !== '') clearEntry();
+            break;
 
-      } else if (event.keyCode == Tab) {
-        if (document.activeElement == entryInput) {
-          if (suggest.isSingle()) {
-            var tag = suggest.result();
-            suggest.hide();
-            entryInput.value = entryInput.value.replace(TAG_REGEX, '#' + tag + ' ');
-          } else {
-            suggest.next();
-          }
+          case TAB:
+            if (suggest.isSingle()) {
+              var tag = suggest.result();
+              suggest.hide();
+              entryInput.value = entryInput.value.replace(TAG_REGEX, '#' + tag + ' ');
+            } else {
+              suggest.next();
+            }
 
-          suggest.render();
-        }
-
-      } else if (event.keyCode == Space) {
-        if (document.activeElement == entryInput) {
-          var tag = suggest.result();
-          if (tag) {
-            suggest.hide();
             suggest.render();
-            // FIXME: effect
-            entryInput.value = entryInput.value.replace(TAG_REGEX, '#' + tag);
-          }
+            break;
+
+          case SPACE:
+            var tag = suggest.result();
+            if (tag) {
+              suggest.hide();
+              suggest.render();
+              // FIXME: effect
+              entryInput.value = entryInput.value.replace(TAG_REGEX, '#' + tag);
+            }
+
+            break;
         }
       }
     });
-
-    return {
-    };
   })();
 
   var filterComponent = (function () {
@@ -532,42 +530,42 @@
     });
 
     document.addEventListener('keydown', function (event) {
-      if (event.keyCode == Esc) {
-        if (document.activeElement === filterInput) {
-          if (filterInput.value === '') {
-            hideTagSuggestions();
-            hideClearFilterInput();
-            filterInput.blur();
-          } else {
-            clearFilter();
-          }
-        } else if (filterInput.value !== '') {
-          clearFilter();
-        }
+      if (document.activeElement === filterInput) {
+        switch(event.keyCode) {
+          case ESC:
+            if (filterInput.value === '') {
+              hideTagSuggestions();
+              hideClearFilterInput();
+              filterInput.blur();
+            } else {
+              clearFilter();
+            }
 
-      } else if (event.keyCode == Tab) {
-        if (document.activeElement === filterInput) {
-          if (suggest.isSingle()) {
-            var tag = suggest.result();
-            suggest.hide();
-            filterInput.value = tag;
-            fetchLog(tag);
-          } else {
-            suggest.next();
-          }
+            break;
 
-          suggest.render();
-        }
+          case TAB:
+            if (suggest.isSingle()) {
+              var tag = suggest.result();
+              suggest.hide();
+              filterInput.value = tag;
+              fetchLog(tag);
+            } else {
+              suggest.next();
+            }
 
-      } else if (event.keyCode == Space) {
-        if (document.activeElement === filterInput) {
-          var tag = suggest.result();
-          if (tag) {
-            suggest.hide();
             suggest.render();
-            filterInput.value = tag;
-            fetchLog(filterInput.value);
-          }
+            break;
+
+          case SPACE:
+            var tag = suggest.result();
+            if (tag) {
+              suggest.hide();
+              suggest.render();
+              filterInput.value = tag;
+              fetchLog(filterInput.value);
+            }
+
+            break;
         }
       }
     });
@@ -584,9 +582,6 @@
         }
       }
     });
-
-    return {
-    };
   })();
 
   fetchTags();
@@ -594,11 +589,11 @@
 
   document.onkeydown = function (event) {
     switch (event.keyCode) {
-      case Tab:
+      case TAB:
         return false;
         break;
 
-      case Esc:
+      case ESC:
         return false;
         break;
     };
