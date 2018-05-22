@@ -51,7 +51,6 @@ h1, h2 {
 }
 
 .log {
-  line-height: 1.6em;
   padding-top: .3em;
 }
 
@@ -65,7 +64,7 @@ h1, h2 {
 }
 
 .log li {
-  line-height: 1.6em;
+  margin: .3em 0;
 }
 
 code {
