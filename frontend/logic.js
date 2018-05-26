@@ -117,7 +117,7 @@
 
   const handleTodoClick = function (event) {
     const origin = findParentWithClass(event.target, 'todo-button');
-    const todoElement = origin.getElementsByClassName('todo')[0];
+    const todoElement = origin.querySelectorAll('.todo')[0];
     const classList = todoElement.classList;
     const id = origin.dataset.id;
 
@@ -138,7 +138,7 @@
 
   const setupTodoHandlers = function () {
     Array
-      .from(document.getElementsByClassName('todo-button'))
+      .from(document.querySelectorAll('.todo-button'))
       .forEach(todo => todo.addEventListener('click', handleTodoClick));
   };
 
