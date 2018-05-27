@@ -280,20 +280,15 @@
 
   const entryComponent = (function () {
     const entryInput = select('entry-input');
-    const entrySuggest = select('shadow-suggest');
 
+    const entrySuggest = select('shadow-suggest');
     const entryTagSuggestions = select('entry-tag-suggestions');
 
-    const entryButtonAdd = select('add-entry');
     const entryButtonDone = select('entry-done');
     const entryButtonHashtag = select('insert-hashtag');
 
-    if (
-      window.matchMedia &&
-      window.matchMedia("(min-device-width: 768px)").matches
-    ) {
-      entryInput.focus();
-    }
+    const showEntryDoneButton = _ => show(entryButtonDone);
+    const hideEntryDoneButton = _ => hide(entryButtonDone);
 
     const suggest = Suggest({
       input: entryInput,
@@ -331,6 +326,12 @@
     entryInput.addEventListener('input', _ => {
       suggest.update(entryInput.value);
       suggest.render();
+
+      if (entryInput.value) {
+        showEntryDoneButton();
+      } else {
+        hideEntryDoneButton();
+      }
     });
 
     entryInput.addEventListener('keyup', event => {
@@ -344,33 +345,12 @@
       }
     });
 
-    entryButtonAdd.addEventListener('click', _ => entryInput.focus());
-
-    window.addEventListener('scroll', event => {
-      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
-        entryButtonAdd.classList.add('hidden');
-      } else {
-        entryButtonAdd.classList.remove('hidden');
-      }
-    });
-
-    entryInput.addEventListener('input', event => {
-      if (entryInput.value) {
-        showEntryDoneButton();
-      } else {
-        hideEntryDoneButton();
-      }
-    });
-
     entryButtonHashtag.addEventListener('click', event => {
       event.preventDefault();
       entryInput.value += '#';
       entryInput.focus();
       showEntryDoneButton();
     });
-
-    const showEntryDoneButton = _ => show(entryButtonDone);
-    const hideEntryDoneButton = _ => hide(entryButtonDone);
 
     entryButtonDone.addEventListener('click', event => {
       saveEvent(entryInput.value).then(_ => {
@@ -391,36 +371,59 @@
       }
     });
 
-    document.addEventListener('keydown', event => {
-      if (document.activeElement === entryInput) {
-        switch (event.keyCode) {
-          case ESC:
-            if (entryInput.value !== '') clearEntry();
-            break;
+    entryInput.addEventListener('keydown', event => {
+      switch (event.keyCode) {
+        case ESC:
+          if (entryInput.value !== '') clearEntry();
+          break;
 
-          case TAB:
-            if (suggest.isSingle()) {
-              const tag = suggest.result();
-              suggest.hide();
-              entryInput.value = entryInput.value.replace(TAG_REGEX, '#' + tag + ' ');
-            } else {
-              suggest.next();
-            }
-
-            suggest.render();
-            break;
-
-          case SPACE:
+        case TAB:
+          if (suggest.isSingle()) {
             const tag = suggest.result();
-            if (tag) {
-              suggest.hide();
-              suggest.render();
-              // FIXME: effect
-              entryInput.value = entryInput.value.replace(TAG_REGEX, '#' + tag);
-            }
+            suggest.hide();
+            entryInput.value = entryInput.value.replace(TAG_REGEX, '#' + tag + ' ');
+          } else {
+            suggest.next();
+          }
 
-            break;
-        }
+          suggest.render();
+          break;
+
+        case SPACE:
+          const tag = suggest.result();
+          if (tag) {
+            suggest.hide();
+            suggest.render();
+            // FIXME: effect
+            entryInput.value = entryInput.value.replace(TAG_REGEX, '#' + tag);
+          }
+
+          break;
+      }
+    });
+
+    if (
+      window.matchMedia &&
+      window.matchMedia("(min-device-width: 768px)").matches
+    ) {
+      entryInput.focus();
+    }
+
+    return {
+      input: entryInput,
+    };
+  })();
+
+  (function () {
+    const entryButtonAdd = select('add-entry');
+
+    entryButtonAdd.addEventListener('click', _ => entryComponent.input.focus());
+
+    window.addEventListener('scroll', event => {
+      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+        entryButtonAdd.classList.add('hidden');
+      } else {
+        entryButtonAdd.classList.remove('hidden');
       }
     });
   })();
@@ -515,44 +518,42 @@
       suggest.render();
     });
 
-    document.addEventListener('keydown', event => {
-      if (document.activeElement === filterInput) {
-        switch(event.keyCode) {
-          case ESC:
-            if (filterInput.value === '') {
-              hideTagSuggestions();
-              hideClearFilterInput();
-              filterInput.blur();
-            } else {
-              clearFilter();
-            }
+    filterInput.addEventListener('keydown', event => {
+      switch(event.keyCode) {
+        case ESC:
+          if (filterInput.value === '') {
+            hideTagSuggestions();
+            hideClearFilterInput();
+            filterInput.blur();
+          } else {
+            clearFilter();
+          }
 
-            break;
+          break;
 
-          case TAB:
-            if (suggest.isSingle()) {
-              const tag = suggest.result();
-              suggest.hide();
-              filterInput.value = tag;
-              fetchLog(tag);
-            } else {
-              suggest.next();
-            }
-
-            suggest.render();
-            break;
-
-          case SPACE:
+        case TAB:
+          if (suggest.isSingle()) {
             const tag = suggest.result();
-            if (tag) {
-              suggest.hide();
-              suggest.render();
-              filterInput.value = tag;
-              fetchLog(filterInput.value);
-            }
+            suggest.hide();
+            filterInput.value = tag;
+            fetchLog(tag);
+          } else {
+            suggest.next();
+          }
 
-            break;
-        }
+          suggest.render();
+          break;
+
+        case SPACE:
+          const tag = suggest.result();
+          if (tag) {
+            suggest.hide();
+            suggest.render();
+            filterInput.value = tag;
+            fetchLog(filterInput.value);
+          }
+
+          break;
       }
     });
 
