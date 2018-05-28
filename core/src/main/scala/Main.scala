@@ -10,7 +10,7 @@ import io.circe.Json
 import io.circe.syntax._
 import io.circe.generic.auto._
 
-import org.joda.time.LocalDateTime
+import org.joda.time.{LocalDate, LocalDateTime}
 
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 
@@ -42,18 +42,49 @@ object Main extends App with FailFastCirceSupport with Directives {
     }
   }
 
+  private def textEntires: Seq[Text] = {
+    journal.log
+      .map( _.content )
+      .collect { case text: Text => text }
+  }
+
+  private def allTags: Set[String] = {
+    textEntires.flatMap( _.tags ).toSet
+  }
+
+  private def entriesByDate: Seq[(LocalDate, Seq[Event])] = {
+    journal.log
+      .groupBy { event =>
+        new LocalDateTime(event.creationTime).toLocalDate
+      }
+      .toSeq
+      .sortBy( _._1.toString )
+  }
+
   val route = {
     pathPrefix("api") {
       path("tags") {
+        complete(allTags.toSeq.sorted)
+
+      } ~
+      path("stats") {
         complete {
-          journal.log
-            .view
-            .map( _.content )
-            .collect { case text: Text => text.tags }
-            .flatten
-            .toSeq
-            .distinct
-            .sorted
+          Json.obj(
+            "entries" -> Json.obj(
+              "total" -> textEntires.size.asJson,
+              "by-date" -> entriesByDate
+                .map { case (k, v) => k.toString -> v.size }
+                .asJson,
+            ),
+            "tags" -> Json.obj(
+              "total" -> allTags.size.asJson,
+              "by-name" -> textEntires
+                .flatMap( _.tags )
+                .groupBy(identity)
+                .map { case (k, v) => k -> v.size }
+                .asJson,
+            )
+          )
         }
 
       } ~
@@ -80,12 +111,7 @@ object Main extends App with FailFastCirceSupport with Directives {
       } ~
       path("log-by-date") {
         complete {
-          journal.log
-            .groupBy { event =>
-              new LocalDateTime(event.creationTime).toLocalDate
-            }
-            .toSeq
-            .sortBy( _._1.toString )
+          entriesByDate
             .map { case (key, events) =>
               Json.obj(
                 "date" -> key.toString.asJson,
