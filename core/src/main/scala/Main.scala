@@ -8,6 +8,8 @@ import akka.http.scaladsl.model.StatusCodes
 
 import cats.implicits._
 
+import com.typesafe.config.ConfigFactory
+
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 
@@ -32,8 +34,9 @@ object Main
   implicit val materializer = ActorMaterializer()
 
   val storage = new FileStorage[Task]("second.json")
+  val youtube = new YouTube(ConfigFactory.load.getString("decima.youtube.key"))
 
-  Journal(storage)
+  Journal(storage, youtube)
     .map { journal =>
       val server = new Server(journal)
 

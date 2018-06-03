@@ -4,14 +4,16 @@ package decima
 class MarkdownSpec extends UnitSpec {
   import Markdown._
 
-  val text = "#test `code` [hello](world) *italic* --strike-- **strong**"
+  val text = "#test `code` [hello](world) [link] *italic* --strike-- **strong**"
 
   "Markdown" should "parse text to markdown AST" in {
     Markdown.parse(text) should be (Vector(
       Text("#test "),
       Code("code"),
       Text(" "),
-      Link("hello", "world", ""),
+      Link("hello", "world"),
+      Text(" "),
+      LinkRef("link"),
       Text(" "),
       Italic("italic"),
       Text(" --strike-- "),

@@ -1,10 +1,12 @@
 package decima
 
 import cats.{Applicative, FlatMap, Functor}
-import cats.syntax.flatMap._
-import cats.syntax.functor._
+import cats.implicits._
 import cats.effect.Concurrent
 import cats.effect.concurrent.Ref
+
+import monix.eval.Task
+import monix.execution.Scheduler.Implicits.global
 
 
 object Journal {
@@ -20,7 +22,8 @@ object Journal {
   }
 
   def apply[F[_]: Concurrent : Applicative : Functor : FlatMap](
-    storage: Storage[F]
+    storage: Storage[F],
+    youtube: YouTube,
   ): F[Journal[F]] = {
     for {
       log <- storage.load()
@@ -32,7 +35,30 @@ object Journal {
           .toSet
       }
     } yield {
-      new Journal(storage, _log, _toggleTodos)
+      new Journal(storage, youtube, _log, _toggleTodos)
+    }
+  }
+
+  def wrapTags(content: String): String = {
+    TagRegex.replaceAllIn(content, m => f"`$m`")
+  }
+
+  def processContent(
+    youtube: YouTube,
+    markdown: Seq[Markdown],
+  ): Task[Seq[Markdown]] = {
+    markdown.toVector.traverse {
+      case Markdown.Text(content) =>
+        Task.now(Markdown.Text(wrapTags(content)))
+
+      case ref @ Markdown.LinkRef(url @ youtube(futureVideoMeta)) =>
+        futureVideoMeta map {
+          case None => ref
+          case Some(info) => Markdown.Link(text = info.title, url = url)
+        }
+
+      case other =>
+        Task.now(other)
     }
   }
 }
@@ -40,6 +66,7 @@ object Journal {
 
 final class Journal[F[_]: Concurrent : Applicative : FlatMap](
   storage: Storage[F],
+  youtube: YouTube,
   _log: Ref[F, Seq[Event]],
   _toggledTodos: Ref[F, Set[Long]],
 ) {
@@ -63,12 +90,11 @@ final class Journal[F[_]: Concurrent : Applicative : FlatMap](
   def toggledTodos: F[Set[Long]] = _toggledTodos.get
 
   def save(content: String): F[Unit] = {
-    save {
-      Text(
-        tags = extractTags(content),
-        content = TagRegex.replaceAllIn(content.trim, m => f"`$m`"),
-      )
-    }
+    for {
+      markdown <- Concurrent[F].unit.map( _ => Markdown.parse(content.trim) )
+      processed <- processContent(youtube, markdown).to[F]
+      _ <- save(Text(extractTags(content), Markdown.render(processed)))
+    } yield {}
   }
 
   def save(content: EventContent): F[Unit] = {

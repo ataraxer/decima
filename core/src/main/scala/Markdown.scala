@@ -32,8 +32,8 @@ object Markdown {
   def render(nodes: Seq[Markdown]): String = {
     nodes.toVector.foldMap {
       case Text(content) => content
-      case Link(text, url, "") => f"[$text]($url)"
-      case Link(text, url, title) => f"""[$text]($url "$title")"""
+      case Link(text, url) => f"[$text]($url)"
+      case LinkRef(url) => f"[$url]"
       case Italic(content) => f"*$content*"
       case Strong(content) => f"**$content**"
       case Code(content) => f"`$content`"
@@ -41,7 +41,8 @@ object Markdown {
   }
 
   final case class Text(content: String) extends Markdown
-  final case class Link(text: String, url: Uri, title: String = "") extends Markdown
+  final case class Link(text: String, url: Uri) extends Markdown
+  final case class LinkRef(url: Uri) extends Markdown
   final case class Italic(content: String) extends Markdown
   final case class Strong(content: String) extends Markdown
   final case class Code(content: String) extends Markdown
@@ -97,13 +98,15 @@ class AstMarkdownVisitor
     add(Markdown.Link(
       text = node.getText.toString,
       url = Uri(node.getUrl.toString),
-      title = node.getTitle.toString,
     ))
+  }
+
+  def visit(node: LinkRef) = {
+    add(Markdown.LinkRef(url = Uri(node.getReference.toString)))
   }
 
   def visit(node: SoftLineBreak) = {}
   def visit(node: MailLink) = {}
-  def visit(node: LinkRef) = {}
   def visit(node: ImageRef) = {}
   def visit(node: Image) = {}
   def visit(node: HtmlInlineComment) = {}
