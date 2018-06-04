@@ -60,6 +60,8 @@ val circe = Seq(
 ).map( _ % circeVersion )
 
 val other = Seq(
+  "org.typelevel" %% "cats-effect" % "1.0.0-RC2",
+  "io.monix" %% "monix" % "3.0.0-RC1",
   "joda-time" % "joda-time" % "2.9.9",
   "org.scalatest" %% "scalatest" % "3.0.4" % Test,
 )

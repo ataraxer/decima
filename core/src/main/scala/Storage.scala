@@ -1,6 +1,6 @@
 package decima
 
-import cats.Id
+import cats.effect.Async
 
 import io.circe.parser.parse
 import io.circe.generic.auto._
@@ -20,7 +20,7 @@ trait Storage[F[_]] {
 }
 
 
-final class FileStorage(path: String) extends Storage[Id] {
+final class FileStorage[F[_]: Async](path: String) extends Storage[F] {
   import StandardOpenOption._
   private val charset = StandardCharsets.UTF_8.toString
   private val channel = FileChannel.open(Paths.get(path), CREATE, WRITE, READ)
@@ -33,19 +33,23 @@ final class FileStorage(path: String) extends Storage[Id] {
     new PrintWriter(new BufferedWriter(Channels.newWriter(channel, charset)))
   }
 
-  def load(): Seq[Event] = {
-    reader.lines().iterator.asScala.toSeq
-      .zipWithIndex.map { case (line, index) =>
-        parse(line)
-          .flatMap( _.as[Event] )
-          .fold(throw _, identity)
-          .copy(id = Some(index.toLong))
-      }
+  def load(): F[Seq[Event]] = {
+    Async[F].pure {
+      reader.lines().iterator.asScala.toSeq
+        .zipWithIndex.map { case (line, index) =>
+          parse(line)
+            .flatMap( _.as[Event] )
+            .fold(throw _, identity)
+            .copy(id = Some(index.toLong))
+        }
+    }
   }
 
-  def save(event: Event): Unit = {
-    writer.println(event.asJson.noSpaces)
-    writer.flush()
+  def save(event: Event): F[Unit] = {
+    Async[F].pure {
+      writer.println(event.asJson.noSpaces)
+      writer.flush()
+    }
   }
 }
 
