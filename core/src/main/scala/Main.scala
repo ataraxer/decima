@@ -33,32 +33,44 @@ object Main
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
 
-  val storage = new FileStorage[Task]("second.json")
-  val youtube = new YouTube(ConfigFactory.load.getString("decima.youtube.key"))
+  val work = new Node("work.json", 1337).start
+  val life = new Node("life.json", 8080).start
 
-  Journal(storage, youtube)
-    .map { journal =>
-      val server = new Server(journal)
-
-      implicit val exceptionHandler = ExceptionHandler {
-        case reason: IllegalArgumentException =>
-          complete(StatusCodes.BadRequest -> reason.getMessage)
-      }
-
-      Http()
-        .bindAndHandle(server.route, interface = "0.0.0.0", port = 8080)
-        .onComplete {
-          case Success(binding) =>
-            println(binding)
-          case Failure(reason) =>
-            println(Console.RED + "ERROR: " + reason.getMessage + Console.RESET)
-            system.terminate()
-            sys.exit(1)
-        }
-    }
-    .runAsync
+  (work zip life).runAsync
 }
 
+
+final class Node
+    (file: String, port: Int)
+    (implicit system: ActorSystem, materializer: ActorMaterializer)
+  extends Directives {
+
+  def start: Task[Unit] = {
+    val storage = new FileStorage[Task](file)
+    val youtube = new YouTube(ConfigFactory.load.getString("decima.youtube.key"))
+
+    Journal(storage, youtube)
+      .map { journal =>
+        val server = new Server(journal)
+
+        implicit val exceptionHandler = ExceptionHandler {
+          case reason: IllegalArgumentException =>
+            complete(StatusCodes.BadRequest -> reason.getMessage)
+        }
+
+        Http()
+          .bindAndHandle(server.route, interface = "0.0.0.0", port = port)
+          .onComplete {
+            case Success(binding) =>
+              println(binding)
+            case Failure(reason) =>
+              println(Console.RED + "ERROR: " + reason.getMessage + Console.RESET)
+              system.terminate()
+              sys.exit(1)
+          }
+      }
+  }
+}
 
 
 final class Server(journal: Journal[Task])
