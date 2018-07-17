@@ -3,6 +3,7 @@
   const ENTER = 13;
   const ESC = 27;
   const SPACE = 32;
+  const QUESTION_MARK = 191;
 
   Handlebars.registerHelper('md', data => {
     return new Handlebars.SafeString(marked.inlineLexer(data, [], {}));
@@ -569,6 +570,10 @@
         }
       }
     });
+
+    return {
+      input: filterInput,
+    };
   })();
 
   fetchTags();
@@ -576,11 +581,22 @@
 
   document.onkeydown = event => {
     switch (event.keyCode) {
+      case QUESTION_MARK:
+        if (event.ctrlKey) {
+          filterComponent.input.focus();
+          return false;
+        }
+
       case TAB:
         return false;
 
       case ESC:
         return false;
+
+      default:
+        const filterFocused = document.activeElement === filterComponent.input;
+        const entryFocused = document.activeElement === entryComponent.input;
+        if (!filterFocused && !entryFocused) entryComponent.input.focus();
     };
   };
 })();
