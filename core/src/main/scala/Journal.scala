@@ -1,5 +1,7 @@
 package decima
 
+import akka.http.scaladsl.model.Uri
+
 import cats.{Applicative, FlatMap, Functor}
 import cats.implicits._
 import cats.effect.Concurrent
@@ -9,9 +11,36 @@ import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
 
 
+final case class LinkRewriteRule(extract: Uri => Option[String]) {
+  def unapply(url: Uri): Option[Markdown] = {
+    extract(url).map(Markdown.Link(_, url))
+  }
+}
+
+
 object Journal {
   val TagRegex = """#[\w\d-_]+""".r
   val WrappedTagRegex = """`#[\w\d-_]+`""".r
+
+  object rewrites {
+    val JiraRegex = """[^.]+\.atlassian.net/browse/([^/]+)""".r
+
+    val jira = LinkRewriteRule { url =>
+      url.toString match {
+        case JiraRegex(ticket) => Some(ticket)
+        case _ => None
+      }
+    }
+
+    val GitHubRegex = """(https://)?github.com/([^/]+)/([^/]+)""".r
+
+    val github = LinkRewriteRule { url =>
+      url.toString match {
+        case GitHubRegex(_, owner, name) => Some(f"$owner/$name")
+        case _ => None
+      }
+    }
+  }
 
   def extractTags(input: String): Set[String] = {
     TagRegex.findAllIn(input).map( _ stripPrefix "#" ).toSet
@@ -56,6 +85,9 @@ object Journal {
           case None => ref
           case Some(info) => Markdown.Link(text = info.title, url = url)
         }
+
+      case Markdown.LinkRef(rewrites.jira(output)) => Task.now(output)
+      case Markdown.LinkRef(rewrites.github(output)) => Task.now(output)
 
       case other =>
         Task.now(other)
