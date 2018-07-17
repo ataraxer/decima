@@ -4,7 +4,9 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server._
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.{HttpEntity, ContentType, StatusCodes}
+import akka.http.scaladsl.model.MediaTypes.`text/css`
+import akka.http.scaladsl.model.HttpCharsets.`UTF-8`
 
 import cats.implicits._
 
@@ -33,15 +35,27 @@ object Main
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
 
-  val work = new Node("work.json", 1337).start
-  val life = new Node("life.json", 8080).start
+  val commonCss = Map("textcolor" -> "#f8f8f8")
+
+  val workCss = Map(
+    "maincolor" -> "#6e9cb9",
+    "maincolorheader" -> "rgba(110, 156, 185, 0.9)",
+  )
+
+  val lifeCss = Map(
+    "maincolor" -> "#46b980",
+    "maincolorheader" -> "rgba(70, 185, 128, 0.9)",
+  )
+
+  val work = new Node("work.json", 1337, commonCss ++ workCss).start
+  val life = new Node("life.json", 8080, commonCss ++ lifeCss).start
 
   (work zip life).runAsync
 }
 
 
 final class Node
-    (file: String, port: Int)
+    (file: String, port: Int, cssVariables: Map[String, String])
     (implicit system: ActorSystem, materializer: ActorMaterializer)
   extends Directives {
 
@@ -51,7 +65,7 @@ final class Node
 
     Journal(storage, youtube)
       .map { journal =>
-        val server = new Server(journal)
+        val server = new Server(journal, cssVariables)
 
         implicit val exceptionHandler = ExceptionHandler {
           case reason: IllegalArgumentException =>
@@ -73,7 +87,7 @@ final class Node
 }
 
 
-final class Server(journal: Journal[Task])
+final class Server(journal: Journal[Task], cssVariables: Map[String, String])
   extends FailFastCirceSupport
   with Directives
   with MonixMarshalling {
@@ -236,6 +250,15 @@ final class Server(journal: Journal[Task])
 
     } ~
     pathSingleSlash { getFromFile("../frontend/index.html") } ~
+    path("variables.css") {
+      val content = cssVariables
+        .map { case (key, value) => f"--$key: $value;" }
+        .mkString(":root {\n", "\n", "}")
+
+      val contentType = ContentType.WithCharset(`text/css`, `UTF-8`)
+
+      complete(HttpEntity(contentType, content))
+    } ~
     getFromDirectory("../frontend")
   }
 }

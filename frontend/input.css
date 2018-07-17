@@ -20,7 +20,7 @@ input[type="text"] {
 }
 
 input[type="text"]:focus {
-  border-color: #46b980 !important;
+  border-color: var(--maincolor) !important;
 }
 
 .input-button {
