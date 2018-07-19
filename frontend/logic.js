@@ -392,7 +392,10 @@
 
         case SPACE:
           const tag = suggest.result();
-          if (tag) {
+
+          if (suggest.isSingle()) {
+            suggest.hide();
+          } else if (tag) {
             suggest.hide();
             suggest.render();
             // FIXME: effect
