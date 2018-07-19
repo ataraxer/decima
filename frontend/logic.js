@@ -229,7 +229,10 @@
           const incompleteTag = args.detectSuggestable(text);
 
           if (incompleteTag) {
-            state.tags = tags.filter(tag => tag.startsWith(incompleteTag));
+            state.tags = tags.filter(tag =>
+              tag.startsWith(incompleteTag) &&
+              tag !== incompleteTag
+            );
 
             if (state.tags.length === 1 && state.tags[0] === incompleteTag) {
               state.tags = [];
