@@ -47,14 +47,14 @@ object Main
     "maincolorheader" -> "rgba(70, 185, 128, 0.9)",
   )
 
-  val work = new Node("work.json", 1337, commonCss ++ workCss).start
-  val life = new Node("life.json", 8080, commonCss ++ lifeCss).start
+  val work = new Decima("core/work.json", 1337, commonCss ++ workCss).start
+  val life = new Decima("core/life.json", 8080, commonCss ++ lifeCss).start
 
   (work zip life).runAsync
 }
 
 
-final class Node
+final class Decima
     (file: String, port: Int, cssVariables: Map[String, String])
     (implicit system: ActorSystem, materializer: ActorMaterializer)
   extends Directives {
@@ -249,7 +249,7 @@ final class Server(journal: Journal[Task], cssVariables: Map[String, String])
       }
 
     } ~
-    pathSingleSlash { getFromFile("../frontend/index.html") } ~
+    pathSingleSlash { getFromFile("frontend/index.html") } ~
     path("variables.css") {
       val content = cssVariables
         .map { case (key, value) => f"--$key: $value;" }
@@ -259,7 +259,7 @@ final class Server(journal: Journal[Task], cssVariables: Map[String, String])
 
       complete(HttpEntity(contentType, content))
     } ~
-    getFromDirectory("../frontend")
+    getFromDirectory("frontend")
   }
 }
 
