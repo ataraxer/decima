@@ -22,21 +22,21 @@ class JournalSpec extends UnitSpec with MonixSpec {
     val videoId = "jNQXAC9IVRw"
     val uri = f"https://youtu.be/$videoId"
     val input = Markdown.parse(f"foo [$uri] bar")
-    val output = Markdown.render(Journal.processContent(youtube, input).await)
+    val output = Markdown.render(Journal.processContent(youtube, input))
 
     output should be (f"foo [Me at the zoo]($uri) bar")
   }
 
   it should "detect tags in text" in withYoutube { youtube =>
     val input = Markdown.parse(f"#foo test #bar")
-    val output = Markdown.render(Journal.processContent(youtube, input).await)
+    val output = Markdown.render(Journal.processContent(youtube, input))
 
     output should be (f"`#foo` test `#bar`")
   }
 
   it should "ignore tags in other elements" in withYoutube { youtube =>
     val input = Markdown.parse(f"#foo [#test](#link) #bar")
-    val output = Markdown.render(Journal.processContent(youtube, input).await)
+    val output = Markdown.render(Journal.processContent(youtube, input))
 
     output should be (f"`#foo` [#test](#link) `#bar`")
   }

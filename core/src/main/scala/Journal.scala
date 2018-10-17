@@ -2,14 +2,6 @@ package decima
 
 import akka.http.scaladsl.model.Uri
 
-import cats.{Applicative, FlatMap, Functor}
-import cats.implicits._
-import cats.effect.Concurrent
-import cats.effect.concurrent.Ref
-
-import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
-
 
 final case class LinkRewriteRule(extract: Uri => Option[String]) {
   def unapply(url: Uri): Option[Markdown] = {
@@ -50,22 +42,20 @@ object Journal {
     WrappedTagRegex.replaceAllIn(input, "").trim
   }
 
-  def apply[F[_]: Concurrent : Applicative : Functor : FlatMap](
-    storage: Storage[F],
+  def apply(
+    storage: Storage,
     youtube: YouTube,
-  ): F[Journal[F]] = {
-    for {
-      log <- storage.load()
-      _log <- Ref.of(log)
-      _toggleTodos <- Ref.of {
-        log.iterator
-          .map( _.content )
-          .collect { case toggle: ToggleTodo if toggle.done => toggle.id }
-          .toSet
-      }
-    } yield {
-      new Journal(storage, youtube, _log, _toggleTodos)
+  ): Journal = {
+    val log = storage.load()
+
+    val toggleTodos = {
+      log.iterator
+        .map( _.content )
+        .collect { case toggle: ToggleTodo if toggle.done => toggle.id }
+        .toSet
     }
+
+    new Journal(storage, youtube, log, toggleTodos)
   }
 
   def wrapTags(content: String): String = {
@@ -75,75 +65,66 @@ object Journal {
   def processContent(
     youtube: YouTube,
     markdown: Seq[Markdown],
-  ): Task[Seq[Markdown]] = {
-    markdown.toVector.traverse {
+  ): Seq[Markdown] = {
+    markdown.map {
       case Markdown.Text(content) =>
-        Task.now(Markdown.Text(wrapTags(content)))
+        Markdown.Text(wrapTags(content))
 
       case ref @ Markdown.LinkRef(url @ youtube(futureVideoMeta)) =>
-        futureVideoMeta map {
+        futureVideoMeta match {
           case None => ref
           case Some(info) => Markdown.Link(text = info.title, url = url)
         }
 
-      case Markdown.LinkRef(rewrites.jira(output)) => Task.now(output)
-      case Markdown.LinkRef(rewrites.github(output)) => Task.now(output)
+      case Markdown.LinkRef(rewrites.jira(output)) => output
+      case Markdown.LinkRef(rewrites.github(output)) => output
 
       case other =>
-        Task.now(other)
+        other
     }
   }
 }
 
 
-final class Journal[F[_]: Concurrent : Applicative : FlatMap](
-  storage: Storage[F],
+final class Journal(
+  storage: Storage,
   youtube: YouTube,
-  _log: Ref[F, Seq[Event]],
-  _toggledTodos: Ref[F, Set[Long]],
+  var _log: Seq[Event],
+  var _toggledTodos: Set[Long],
 ) {
-
   import Journal._
 
-  private def toggleTodo(event: Event): F[Unit] = {
+  private def toggleTodo(event: Event): Unit = {
     event.content match {
       case toggle: ToggleTodo =>
-        _toggledTodos.update { toggled =>
-          if (toggle.done) toggled + toggle.id
-          else toggled - toggle.id
+        _toggledTodos = {
+          if (toggle.done) _toggledTodos + toggle.id
+          else _toggledTodos - toggle.id
         }
 
       case _ =>
-        Applicative[F].unit
     }
   }
 
-  def log: F[Seq[Event]] = _log.get
-  def toggledTodos: F[Set[Long]] = _toggledTodos.get
+  def log: Seq[Event] = _log
+  def toggledTodos: Set[Long] = _toggledTodos
 
-  def save(content: String): F[Unit] = {
-    for {
-      markdown <- Concurrent[F].unit.map( _ => Markdown.parse(content.trim) )
-      processed <- processContent(youtube, markdown).to[F]
-      _ <- save(Text(extractTags(content), Markdown.render(processed)))
-    } yield {}
+  def save(content: String): Unit = {
+    val markdown = Markdown.parse(content.trim)
+    val processed = processContent(youtube, markdown)
+    save(Text(extractTags(content), Markdown.render(processed)))
   }
 
-  def save(content: EventContent): F[Unit] = {
-    for {
-      log <- _log.get
+  def save(content: EventContent): Unit = {
+    val event = Event(
+      id = Some(log.lastOption.flatMap( _.id ).fold(0L)( _ + 1 )),
+      creationTime = System.currentTimeMillis,
+      content = content,
+    )
 
-      event = Event(
-        id = Some(log.lastOption.flatMap( _.id ).fold(0L)( _ + 1 )),
-        creationTime = System.currentTimeMillis,
-        content = content,
-      )
-
-      _ <- storage.save(event)
-      _ <- toggleTodo(event)
-      // FIXME: race
-      _ <- _log.update( _ :+ event )
-    } yield {}
+    storage.save(event)
+    toggleTodo(event)
+    _log :+= event
   }
 }
 

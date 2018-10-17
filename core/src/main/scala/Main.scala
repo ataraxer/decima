@@ -12,9 +12,6 @@ import cats.implicits._
 
 import com.typesafe.config.ConfigFactory
 
-import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
-
 import io.circe.Json
 import io.circe.syntax._
 import io.circe.generic.auto._
@@ -24,7 +21,6 @@ import org.joda.time.{LocalDate, LocalDateTime}
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 
 import scala.util.{Success, Failure}
-
 
 
 object Main
@@ -47,10 +43,8 @@ object Main
     "maincolorheader" -> "rgba(70, 185, 128, 0.9)",
   )
 
-  val work = new Decima("core/work.json", 1337, commonCss ++ workCss).start
-  val life = new Decima("core/life.json", 8080, commonCss ++ lifeCss).start
-
-  (work zip life).runAsync
+  new Decima("core/work.json", 1337, commonCss ++ workCss).start()
+  new Decima("core/life.json", 8080, commonCss ++ lifeCss).start()
 }
 
 
@@ -59,35 +53,34 @@ final class Decima
     (implicit system: ActorSystem, materializer: ActorMaterializer)
   extends Directives {
 
-  def start: Task[Unit] = {
-    val storage = new FileStorage[Task](file)
+  import system.dispatcher
+
+  def start(): Unit = {
+    val storage = new FileStorage(file)
     val youtube = new YouTube(ConfigFactory.load.getString("decima.youtube.key"))
+    val journal = Journal(storage, youtube)
+    val server = new Server(journal, cssVariables)
 
-    Journal(storage, youtube)
-      .map { journal =>
-        val server = new Server(journal, cssVariables)
+    implicit val exceptionHandler = ExceptionHandler {
+      case reason: IllegalArgumentException =>
+        complete(StatusCodes.BadRequest -> reason.getMessage)
+    }
 
-        implicit val exceptionHandler = ExceptionHandler {
-          case reason: IllegalArgumentException =>
-            complete(StatusCodes.BadRequest -> reason.getMessage)
-        }
-
-        Http()
-          .bindAndHandle(server.route, interface = "0.0.0.0", port = port)
-          .onComplete {
-            case Success(binding) =>
-              println(binding)
-            case Failure(reason) =>
-              println(Console.RED + "ERROR: " + reason.getMessage + Console.RESET)
-              system.terminate()
-              sys.exit(1)
-          }
+    Http()
+      .bindAndHandle(server.route, interface = "0.0.0.0", port = port)
+      .onComplete {
+        case Success(binding) =>
+          println(binding)
+        case Failure(reason) =>
+          println(Console.RED + "ERROR: " + reason.getMessage + Console.RESET)
+          system.terminate()
+          sys.exit(1)
       }
   }
 }
 
 
-final class Server(journal: Journal[Task], cssVariables: Map[String, String])
+final class Server(journal: Journal, cssVariables: Map[String, String])
   extends FailFastCirceSupport
   with Directives
   with MonixMarshalling {
@@ -96,23 +89,22 @@ final class Server(journal: Journal[Task], cssVariables: Map[String, String])
     throw new IllegalArgumentException(message)
   }
 
-  def serializeEvents(events: Seq[Event]): Task[Seq[Json]] = {
-    journal.toggledTodos.map { toggledTodos =>
-      events.flatMap { event =>
-        event.content match {
-          case _: ToggleTodo =>
-            None
-          case _ if toggledTodos.contains(event.id getOrElse 0L) =>
-            Some(event.asJson.mapObject(_.add("completed", true.asJson)))
-          case _ =>
-            Some(event.asJson)
-        }
+  def serializeEvents(events: Seq[Event]): Seq[Json] = {
+    val toggledTodos = journal.toggledTodos
+    events.flatMap { event =>
+      event.content match {
+        case _: ToggleTodo =>
+          None
+        case _ if toggledTodos.contains(event.id getOrElse 0L) =>
+          Some(event.asJson.mapObject(_.add("completed", true.asJson)))
+        case _ =>
+          Some(event.asJson)
       }
     }
   }
 
-  private def textEntires: Task[Seq[Text]] = {
-    journal.log.map(extractEntries)
+  private def textEntires: Seq[Text] = {
+    extractEntries(journal.log)
   }
 
   private def extractEntries(log: Seq[Event]): Seq[Text] = {
@@ -121,16 +113,16 @@ final class Server(journal: Journal[Task], cssVariables: Map[String, String])
       .collect { case text: Text => text }
   }
 
-  private def allTags: Task[Set[String]] = {
-    textEntires.map(extractTags)
+  private def allTags: Set[String] = {
+    extractTags(textEntires)
   }
 
   private def extractTags(entries: Seq[Text]): Set[String] = {
     entries.flatMap( _.tags ).toSet
   }
 
-  private def entriesByDate: Task[Seq[(LocalDate, Seq[Event])]] = {
-    journal.log.map(groupByDate)
+  private def entriesByDate(): Seq[(LocalDate, Seq[Event])] = {
+    groupByDate(journal.log)
   }
 
   private def groupByDate(log: Seq[Event]): Seq[(LocalDate, Seq[Event])] = {
@@ -145,72 +137,63 @@ final class Server(journal: Journal[Task], cssVariables: Map[String, String])
   val route = {
     pathPrefix("api") {
       path("tags") {
-        complete(allTags.map( _.toSeq.sorted ))
-
+        complete(allTags.toSeq)
       } ~
       path("stats") {
         complete {
-          journal.log map { log =>
-            val entries = extractEntries(log)
+          val log = journal.log
+          val entries = extractEntries(log)
 
-            Json.obj(
-              "entries" -> Json.obj(
-                "total" -> entries.size.asJson,
-                "by-date" -> groupByDate(log)
-                  .map { case (k, v) => k.toString -> v.size }
-                  .asJson,
-              ),
-              "tags" -> Json.obj(
-                "total" -> extractTags(entries).size.asJson,
-                "by-name" -> entries
-                  .flatMap( _.tags )
-                  .groupBy(identity)
-                  .map { case (k, v) => k -> v.size }
-                  .asJson,
-              )
+          Json.obj(
+            "entries" -> Json.obj(
+              "total" -> entries.size.asJson,
+              "by-date" -> groupByDate(log)
+                .map { case (k, v) => k.toString -> v.size }
+                .asJson,
+            ),
+            "tags" -> Json.obj(
+              "total" -> extractTags(entries).size.asJson,
+              "by-name" -> entries
+                .flatMap( _.tags )
+                .groupBy(identity)
+                .map { case (k, v) => k -> v.size }
+                .asJson,
             )
-          }
+          )
         }
 
       } ~
       path("log") {
         parameter('filter) { filter =>
           complete {
-            journal.log
-              .map { log =>
-                log
-                  .filter { event =>
-                    event.content match {
-                      case text: Text => text.tags.contains(filter)
-                      case _ => false
-                    }
+            serializeEvents {
+              journal
+                .log
+                .filter { event =>
+                  event.content match {
+                    case text: Text => text.tags.contains(filter)
+                    case _ => false
                   }
-                  .sortBy( event => event.text.map(Journal.stripTags) )
-              }
-              .flatMap(serializeEvents)
+                }
+                .sortBy( event => event.text.map(Journal.stripTags) )
+            }
           }
 
         } ~
         complete {
-          journal.log.flatMap(serializeEvents)
+          serializeEvents(journal.log)
         }
 
       } ~
       path("log-by-date") {
         complete {
-          entriesByDate map { entries =>
-            entries
-              .toVector
-              .foldMap { case (key, events) =>
-                serializeEvents(events) map { events =>
-                  Vector(
-                    Json.obj(
-                      "date" -> key.toString.asJson,
-                      "events" -> events.asJson,
-                    )
-                  )
-                }
-              }
+          entriesByDate().toVector.foldMap { case (key, events) =>
+            Vector(
+              Json.obj(
+                "date" -> key.toString.asJson,
+                "events" -> serializeEvents(events).asJson,
+              )
+            )
           }
         }
 
@@ -229,19 +212,17 @@ final class Server(journal: Journal[Task], cssVariables: Map[String, String])
         get {
           parameters(('id.as[Long], 'done.as[Boolean])) { (id, done) =>
             complete {
-              journal.log.flatMap { log =>
-                log.lift(id.toInt) match {
-                  case Some(event) =>
-                    event.content match {
-                      case text: Text if text.tags.contains("todo") =>
-                        journal.save(ToggleTodo(id, done))
-                      case _ =>
-                        badRequest(f"Event `$event` is not a todo")
-                    }
+              journal.log.lift(id.toInt) match {
+                case Some(event) =>
+                  event.content match {
+                    case text: Text if text.tags.contains("todo") =>
+                      journal.save(ToggleTodo(id, done))
+                    case _ =>
+                      badRequest(f"Event `$event` is not a todo")
+                  }
 
-                  case None =>
-                    badRequest(f"No event with id: $id")
-                }
+                case None =>
+                  badRequest(f"No event with id: $id")
               }
             }
           }

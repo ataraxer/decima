@@ -8,11 +8,10 @@ import akka.http.scaladsl.model.HttpMethods.GET
 
 import org.joda.time.Period
 
-import monix.eval.Task
-
 import io.circe.{DecodingFailure, Json}
 import io.circe.parser.parse
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 
@@ -63,35 +62,33 @@ final class YouTube(apiKey: String)(implicit system: ActorSystem) {
 
   private implicit val materializer = ActorMaterializer()
 
-  def unapply(uri: Uri): Option[Task[Option[YouTubeMeta]]] = {
+  def unapply(uri: Uri): Option[Option[YouTubeMeta]] = {
     uri match {
       case YouTube(videoId) => Some(fetchMeta(videoId))
       case _ => None
     }
   }
 
-  def fetchMeta(uri: Uri): Task[Option[YouTubeMeta]] = {
+  def fetchMeta(uri: Uri): Option[YouTubeMeta] = {
     uri match {
       case YouTube(videoId) => fetchMeta(videoId)
-      case _ => Task.now(None)
+      case _ => None
     }
   }
 
-  def fetchMeta(videoId: String): Task[Option[YouTubeMeta]] = {
+  def fetchMeta(videoId: String): Option[YouTubeMeta] = {
     val uri = ApiUri.withQuery(Uri.Query(
       "key" -> apiKey,
       "id" -> videoId,
       "part" -> "snippet,contentDetails"
     ))
 
-    for {
-      response <- Task.deferFuture(Http().singleRequest(HttpRequest(GET, uri)))
-      entity <- Task.deferFuture(response.entity.toStrict(30.seconds))
-    } yield {
-      parse(entity.data.utf8String)
-        .flatMap(parseMeta)
-        .fold(throw _, Option(_))
-    }
+    val response = Await.result(Http().singleRequest(HttpRequest(GET, uri)), 5.seconds)
+    val entity = Await.result(response.entity.toStrict(30.seconds), 5.seconds)
+
+    parse(entity.data.utf8String)
+      .flatMap(parseMeta)
+      .fold(throw _, Option(_))
   }
 }
 

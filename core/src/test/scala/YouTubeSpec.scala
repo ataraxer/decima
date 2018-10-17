@@ -33,7 +33,7 @@ class YouTubeSpec extends UnitSpec with MonixSpec {
       val key = config.getString("youtube.key")
       val videoId = "jNQXAC9IVRw"
       val uri = Uri(f"https://youtu.be/$videoId")
-      val result = new YouTube(key).fetchMeta(uri).await
+      val result = new YouTube(key).fetchMeta(uri)
 
       result should be (Some(YouTubeMeta("Me at the zoo", "jawed", 19.seconds)))
     }
