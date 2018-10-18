@@ -608,9 +608,11 @@
   document.onkeydown = event => {
     switch (event.keyCode) {
       case QUESTION_MARK:
-        if (event.ctrlKey) {
+        if (event.metaKey) {
           filterComponent.input.focus();
           return false;
+        } else {
+          return true;
         }
 
       case TAB:
