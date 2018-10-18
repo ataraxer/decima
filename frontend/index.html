@@ -19,6 +19,7 @@
   <script src="bower_components/handlebars/handlebars.min.js"></script>
   <script src="bower_components/fetch/fetch.js"></script>
   <script src="bower_components/marked/lib/marked.js"></script>
+  <script src="https://momentjs.com/downloads/moment.js"></script>
 
   <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
 
@@ -92,10 +93,9 @@
   </footer>
 
   <script id="log-template" type="text/x-handlebars-template">
-    <!--<h3 class="capitalized">9th / Thursday</h2>-->
     <ul class="fa-ul">
     {{#each this}}
-      <li>
+      <li class="{{check-todo this}}">
         <span class="fa-li {{set-todo this}}" data-id="{{id}}">
           <i class="{{bullet this}}"></i>
         </span>
@@ -107,10 +107,10 @@
 
   <script id="sorted-log-template" type="text/x-handlebars-template">
     {{#each this}}
-      <h3 class="capitalized">{{date}}</h2>
+      <h3>{{format-date date}}</h2>
       <ul class="fa-ul">
       {{#each events}}
-        <li>
+        <li class="{{check-todo this}}">
           <span class="fa-li {{set-todo this}}" data-id="{{id}}">
             <i class="{{bullet this}}"></i>
           </span>

@@ -9,6 +9,26 @@
     return new Handlebars.SafeString(marked.inlineLexer(data, [], {}));
   });
 
+  Handlebars.registerHelper('format-date', date => {
+    if (typeof moment !== 'undefined') {
+      return new Handlebars.SafeString(moment(date).format('MMMM [/] Do [/] dddd'));
+    } else {
+      return new Handlebars.SafeString(date);
+    }
+  });
+
+  Handlebars.registerHelper('check-todo', event => {
+    if (event.content.Text.tags.indexOf('todo') > -1) {
+      if (event.completed) {
+        return 'todo-completed';
+      } else {
+        return 'todo-uncompleted';
+      }
+    } else {
+      return '';
+    }
+  });
+
   Handlebars.registerHelper('set-todo', event => {
     if (event.content.Text.tags.indexOf('todo') > -1) {
       return 'todo-button';
@@ -25,7 +45,7 @@
         return 'far fa-circle todo';
       }
     } else {
-      return 'fa fa-angle-right';
+      return 'fas fa-caret-right';
     }
   });
 

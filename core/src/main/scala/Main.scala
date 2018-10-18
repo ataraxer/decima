@@ -34,14 +34,11 @@ object Main
   val commonCss = Map("textcolor" -> "#f8f8f8")
 
   val workCss = Map(
-    "maincolor" -> "#6e9cb9",
+    "maincolor" -> "rgba(110, 156, 185, 0.2)",
     "maincolorheader" -> "rgba(110, 156, 185, 0.9)",
   )
 
-  val lifeCss = Map(
-    "maincolor" -> "#46b980",
-    "maincolorheader" -> "rgba(70, 185, 128, 0.9)",
-  )
+  val lifeCss = workCss
 
   new Decima("core/work.json", 1337, commonCss ++ workCss).start()
   new Decima("core/life.json", 8080, commonCss ++ lifeCss).start()
